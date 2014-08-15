@@ -1,0 +1,12 @@
+## Interface: 50400
+## Title: NinjaKittyAuras
+## Notes: Auras.
+## Dependencies: NinjaKittyUF
+## OptionalDeps: OmniCC
+## Author: meribold
+## Version: 0.1
+
+embeds.xml
+
+NinjaKittyAuras.lua
+config.lua
