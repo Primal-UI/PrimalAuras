@@ -174,19 +174,25 @@ local function GetAuras(group)
   for _, filter in _G.ipairs(group.filters) do
     local queryIndex = 1
     while queryIndex <= 40 and i <= maxAuras do
-      auras[i].name, auras[i].rank, auras[i].icon, auras[i].count, auras[i].dispelType, auras[i].duration,
-      auras[i].expires, auras[i].caster, auras[i].isStealable, auras[i].shouldConsolidate, auras[i].spellID,
-      auras[i].canApplyAura, auras[i].isBossDebuff, auras[i].value1, auras[i].value2, auras[i].value3 =
-      _G.UnitAura(group.unit, queryIndex, filter)
+      local aura = auras[i]
 
-      auras[i].filter = filter
-      auras[i].index = queryIndex
+      aura.name, aura.rank, aura.icon, aura.count, aura.dispelType, aura.duration, aura.expires, aura.caster,
+      aura.isStealable, aura.shouldConsolidate, aura.spellID, aura.canApplyAura, aura.isBossDebuff, aura.value1,
+      aura.value2, aura.value3 = _G.UnitAura(group.unit, queryIndex, filter)
 
-      if not auras[i].name then
+      if not aura.name then
         break
       end
-      if group.mutators and group.mutators[auras[i].name] then
-        group.mutators[auras[i].name](auras[i])
+
+      aura.filter = filter
+      aura.index = queryIndex
+
+      if group.mutators then
+        if group.mutators[aura.spellID] then
+          group.mutators[aura.spellID](aura)
+        elseif group.mutators[aura.name] then
+          group.mutators[aura.name](aura)
+        end
       end
 
       i = i + 1
@@ -215,18 +221,11 @@ local function GetAuras(group)
     i = i + 1
   end
 
-  _G.table.sort(auras, group.compare)
   return auras
 end
 
 local function updateDisplay(display, group)
-  if display.hide and display.hide() or not _G.UnitExists(group.unit) then
-    for _, frame in _G.ipairs(display.frames) do
-      frame:Hide()
-    end
-    return
-  end
-
+  _G.table.sort(auras, group.compare) -- TODO: don't sort all the auras, only the ones we want to display!!
   local frameIndex, i, frame, aura = 1, 1, display.frames[1], auras[1]
   while aura and aura.name and frame do
     if display.whitelist and display.whitelist(aura) or display.blacklist and not display.blacklist(aura) or
@@ -267,10 +266,8 @@ local function updateDisplay(display, group)
         end
         frame.cooldown:Show()
         _G.CooldownFrame_SetTimer(frame.cooldown, start, duration, true)
-      elseif aura.expires <= _G.GetTime() then -- Aura has already expired.
+      else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.
         frame.cooldown:Hide()
-      else
-        _G.error()
       end
       if frame:IsMouseOver() then
         local handler = frame:GetScript("OnEnter")
@@ -285,7 +282,6 @@ local function updateDisplay(display, group)
     i = i + 1
     aura = auras[i]
   end
-  _G.table.sort(auras, group.compare)
 
   if display.orientation == "HORIZONTAL" then
     local numAuras = frameIndex - 1
@@ -303,7 +299,7 @@ local function updateDisplay(display, group)
 
   while frame and frame:IsShown() do
     --frame.icon:SetTexture(nil)
-    _G.CooldownFrame_SetTimer(frame.cooldown) -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
+    --_G.CooldownFrame_SetTimer(frame.cooldown) -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
     frame:Hide()
     frameIndex = frameIndex + 1
     frame = display.frames[frameIndex]
@@ -311,11 +307,15 @@ local function updateDisplay(display, group)
 end
 
 local function updateGroups(unitID)
-  for _, group in _G.ipairs(groups) do
-    if not unitID or group.unit == unitID then
-      GetAuras(group) -- Initialize the auras table and the numAuras variable.
-      for _, display in _G.ipairs(group.displays) do
-        updateDisplay(display, group)
+  if unitID and not _G.UnitExists(unitID) then
+    -- ...
+  else
+    for _, group in _G.ipairs(groups) do
+      if not unitID or group.unit == unitID then
+        GetAuras(group) -- Initialize the auras table and the numAuras variable.
+        for _, display in _G.ipairs(group.displays) do
+          updateDisplay(display, group)
+        end
       end
     end
   end
@@ -342,8 +342,8 @@ function handlerFrame:ADDON_LOADED(name)
 
   -- Fires when the composition of the party changes?
   handlerFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-  --handlerFrame:RegisterEvent("UNIT_TARGETABLE_CHANGED")
 
+  --[=[
   -- http://wowpedia.org/SecureStateDriver
   -- http://wowpedia.org/API_SecureCmdOptionParse
   local stateHandler = _G.CreateFrame("Frame", nil, nil, "SecureHandlerStateTemplate")
@@ -351,6 +351,7 @@ function handlerFrame:ADDON_LOADED(name)
   function stateHandler:onNoExists(unitID)
     updateGroups(unitID)
   end
+
   for _, unit in _G.ipairs({"target", "focus", "arena1", "arena2", "arena3", "arena4", "arena5"}) do
     stateHandler:SetAttribute("_onstate-" .. unit .. "noexists", [[
       if newstate == "noexists" then
@@ -360,24 +361,7 @@ function handlerFrame:ADDON_LOADED(name)
     _G.RegisterStateDriver(stateHandler, unit .. "noexists",
       "[@" .. unit .. ",exists]exists;noexists")
   end
-
-  -- This doesn't work: in the end we only have the last state driver.
-  --[==[
-  function stateHandler:onUnitExists(unitID)
-    --_G.print("Unit exists: \"" .. unitID .. "\".")
-    updateGroups(unitID)
-  end
-  -- Arguments: self, stateid, newstate
-  stateHandler:SetAttribute("_onstate-unitexists", [[
-    if newstate ~= "noexists" then
-      self:CallMethod("onUnitExists", newstate)
-    end
-  ]])
-  for i = 1, 5 do
-    _G.RegisterStateDriver(stateHandler, "unitexists",
-      "[@arena" .. i .. ",exists]arena" .. i .. ";noexists")
-  end
-  --]==]
+  ]=]
 
   self.ADDON_LOADED = nil
 end

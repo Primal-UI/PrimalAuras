@@ -13,13 +13,13 @@ auras.irrelevantAuras = {
 
 -- TODO: Use spell IDs.
 auras.playerBuffBlacklist = {
-  --["Aquatic Form"] = true,
+  ["Aquatic Form"] = true,
   ["Barkskin"] = true,
-  --["Bear Form"] = true,
+  ["Bear Form"] = true,
   ["Berserk"] = true,
   ["Berserking"] = true,
   ["Call of Conquest"] = true,
-  --["Cat Form"] = true,
+  ["Cat Form"] = true,
   ["Clearcasting"] = true,
   ["Dash"] = true,
   ["Dream of Cenarius"] = true,
@@ -38,10 +38,10 @@ auras.playerBuffBlacklist = {
   ["Stampeding Roar"] = true,
   ["Surge of Conquest"] = true,
   ["Survival Instincts"] = true,
-  --["Swift Flight Form"] = true,
+  ["Swift Flight Form"] = true,
   ["Synapse Springs"] = true,
   ["Tiger's Fury"] = true,
-  --["Travel Form"] = true,
+  ["Travel Form"] = true,
 }
 -- http://lua-users.org/wiki/SetOperations
 
@@ -315,7 +315,7 @@ mutators.generalBuffMutators = {
   ["Inner Will"] = function(aura)
     aura.shouldConsolidate = 1
   end,
-  ["Gaze of the Black Prince"] = function(aura)
+  [161780] = function(aura) -- Gaze of the Black Prince
     aura.shouldConsolidate = 1
   end,
 }
@@ -562,9 +562,8 @@ _G.table.insert(groups, {
       numCols = 4,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or
-          auras.disarms[aura.spellID] or auras.defensives[aura.spellID]
-          --or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
+          auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
       end,
       borderColor = function(aura)
         if aura.filter == "HARMFUL" then
