@@ -224,9 +224,31 @@ local function GetAuras(group)
   return auras
 end
 
+local selectedAuras = {}
+
 local function updateDisplay(display, group)
-  _G.table.sort(auras, group.compare) -- TODO: don't sort all the auras, only the ones we want to display!!
-  local frameIndex, i, frame, aura = 1, 1, display.frames[1], auras[1]
+  do -- Populate the selectedAuras table with the auras this display will show.
+    local numFrames, frameIndex, auraIndex = #display.frames, 1, 1
+    while auraIndex <= numAuras and frameIndex <= numFrames do
+      local aura = auras[auraIndex]
+      if aura.name then
+        if display.whitelist and display.whitelist(aura) or display.blacklist and not display.blacklist(aura) or
+          not display.whitelist and not display.blacklist
+        then
+          selectedAuras[frameIndex] = aura
+          frameIndex = frameIndex + 1
+        end
+      end
+      auraIndex = auraIndex + 1
+    end
+    while selectedAuras[frameIndex] do
+      selectedAuras[frameIndex] = nil
+      frameIndex = frameIndex + 1
+    end
+  end
+  _G.table.sort(selectedAuras, display.compare or group.compare)
+
+  local frameIndex, i, frame, aura = 1, 1, display.frames[1], selectedAuras[1]
   while aura and aura.name and frame do
     if display.whitelist and display.whitelist(aura) or display.blacklist and not display.blacklist(aura) or
       not display.whitelist and not display.blacklist
@@ -280,7 +302,7 @@ local function updateDisplay(display, group)
       frame = display.frames[frameIndex]
     end
     i = i + 1
-    aura = auras[i]
+    aura = selectedAuras[i]
   end
 
   if display.orientation == "HORIZONTAL" then

@@ -6,50 +6,57 @@ auras, groups, comparators, mutators, fakeAuras = {}, {}, {}, {}, {}
 
 -- Use this one for all buff groups. We never care about these auras.
 auras.irrelevantAuras = {
-  [72968] = true, -- Precious's Ribbon
-  [70404] = true, -- Precious's Ribbon -- TODO: remove one of these?
+  [2479]   = true, -- Honorless Target
+  [46705]  = true, -- Honorless Target, TODO: are both of these relevant?
+  [72968]  = true, -- Precious's Ribbon
+  [70404]  = true, -- Precious's Ribbon, TODO: remove one of these?
   [145389] = true, -- Temporal Anomaly
 }
 
--- TODO: Use spell IDs.
-auras.playerBuffBlacklist = {
-  ["Aquatic Form"] = true,
-  ["Barkskin"] = true,
-  ["Bear Form"] = true,
-  ["Berserk"] = true,
-  ["Berserking"] = true,
-  ["Call of Conquest"] = true,
-  ["Cat Form"] = true,
-  ["Clearcasting"] = true,
-  ["Dash"] = true,
-  ["Dream of Cenarius"] = true,
-  ["Glyph of Amberskin Protection"] = true,
-  ["Heart of the Wild"] = true,
-  ["Honorless Target"] = true,
-  ["Incarnation: King of the Jungle"] = true,
-  ["Might of Ursoc"] = true,
-  ["Nature's Grasp"] = true,
-  ["Nature's Vigil"] = true,
-  ["Predatory Swiftness"] = true,
-  ["Prowl"] = true,
-  ["Savage Roar"] = true,
-  ["Shadowmeld"] = true,
-  ["Stampede"] = true,
-  ["Stampeding Roar"] = true,
-  ["Surge of Conquest"] = true,
-  ["Survival Instincts"] = true,
-  ["Swift Flight Form"] = true,
-  ["Synapse Springs"] = true,
-  ["Tiger's Fury"] = true,
-  ["Travel Form"] = true,
+-- These auras (for player) are already shown by other addons.
+auras.coveredPlayerAuras = {
+  [1066]   = true, -- Aquatic Form
+  [22812]  = true, -- Barkskin
+  [5487]   = true, -- Bear Form
+  [50334]  = true, -- Berserk (Bear Form)
+  [106951] = true, -- Berserk (Cat Form)
+  [26297]  = true, -- Berserking (Troll Racial)
+                   -- TODO: Call of Conquest
+  [768]    = true, -- Cat Form
+  [135700] = true, -- Clearcasting
+  [1850]   = true, -- Dash
+  [145152] = true, -- Dream of Cenarius
+  [63058]  = true, -- Glyph of Amberskin Protection
+  [108292] = true, -- Heart of the Wild (Feral)
+  [102543] = true, -- Incarnation: King of the Jungle
+  [106922] = true, -- Might of Ursoc
+  [16689]  = true, -- Nature's Grasp
+  [124974] = true, -- Nature's Vigil
+  [69369]  = true, -- Predatory Swiftness
+  [5215]   = true, -- Prowl
+  [102547] = true, -- Prowl (while Incarnation: King of the Jungle is active)
+  [52610]  = true, -- Savage Roar
+  [127538] = true, -- Savage Roar (with Glyph of Savagery)
+  [58984]  = true, -- Shadowmeld, TODO: confirm spell ID.
+  [81022]  = true, -- Stampede, TODO: confirm spell ID.
+  [131538] = true, -- Stampede, TODO: confirm spell ID.
+  [77761]  = true, -- Stampeding Roar (when used in Bear Form)
+  [77764]  = true, -- Stampeding Roar (when used in Cat Form)
+  [106898] = true, -- Stampeding Roar (when used in caster form)
+                   -- TODO: Surge of Conquest
+  [61336]  = true, -- Survival Instincts
+  [40120]  = true, -- Swift Flight Form
+                   -- TODO: Synapse Springs
+  [5217]   = true, -- Tiger's Fury
+  [783]    = true, -- Travel Form
 }
--- http://lua-users.org/wiki/SetOperations
 
--- TODO: Use spell IDs.
+--[[
 auras.longPlayerBuffBlacklist = {
   ["Leader of the Pack"] = true,
   --["Symbiosis"] = true,
 }
+]]
 
 auras.playerBuffTooltipBlacklist = {
   "Increases ground speed by %d%d%d?%%",
@@ -288,22 +295,22 @@ auras.immunities = {
 -- TODO: Might of Ursoc? Last Stand? Combat Insight?
 auras.defensives = {
   [108271] = true, -- Astral Shift
-  [22812] = true,  -- Barkskin
-  [74001] = true,  -- Combat Readiness
+  [22812]  = true, -- Barkskin
+  [74001]  = true, -- Combat Readiness
   [118038] = true, -- Die by the Sword
-  [5277] = true,   -- Evasion
-  [1966] = true,   -- Feint
+  [5277]   = true, -- Evasion
+  [1966]   = true, -- Feint
   [113613] = true, -- Growl (Rogue Symbiosis)
-  [47788] = true,  -- Guardian Spirit
+  [47788]  = true, -- Guardian Spirit
   [102342] = true, -- Ironbark
   [116849] = true, -- Life Cocoon
-  [33206] = true,  -- Pain Suppression
-  [97463] = true,  -- Rallying Cry. Spell ID confirmed. 97462 is the actual spell.
-  [53480] = true,  -- Roar of Sacrifice
-  [30823] = true,  -- Shamanistic Rage
-  [61336] = true,  -- Survival Instincts
+  [33206]  = true, -- Pain Suppression
+  [97463]  = true, -- Rallying Cry. Spell ID confirmed. 97462 is the actual spell.
+  [53480]  = true, -- Roar of Sacrifice
+  [30823]  = true, -- Shamanistic Rage
+  [61336]  = true, -- Survival Instincts
   [113306] = true, -- Survival Instincts (Brewmaster Monk Symbiosis)
-  [871] = true,    -- Shield Wall
+  [871]    = true, -- Shield Wall
   [125174] = true, -- Touch of Karma (buff)
 }
 
@@ -446,7 +453,7 @@ _G.table.insert(groups, {
         return 0, 0, 0
       end,
     },
-    { -- TODO: display some big defensives like Guardian Spirit and Pain Suppression here.
+    {
       name = "NKAPrimaryPlayerAuras",
       parent = "NKPlayerFrame",
       anchorPoint = "TOPLEFT",
@@ -459,8 +466,9 @@ _G.table.insert(groups, {
       numRows = 1,
       numCols = 4,
       orientation = "HORIZONTAL",
-      whitelist = function(aura) -- TODO.
-        return aura.name == "Guardian Spirit"
+      whitelist = function(aura) -- TODO: what else should be added?
+        return aura.spellID == 47788 --[[Guardian Spirit]] or aura.spellID == 97463 --[[Rallying Cry]]
+          or aura.spellID == 33206 --[[Pain Suppression]] or aura.spellID == 53480 --[[Roar of Sacrifice]]
       end,
       borderColor = function(aura)
         if aura.filter == "HARMFUL" then
@@ -484,7 +492,7 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       blacklist = function(aura)
         return aura.filter == "HELPFUL" and (auras.irrelevantAuras[aura.spellID] or
-          auras.playerBuffBlacklist[aura.name] or aura.duration >= 300 or aura.shouldConsolidate
+          auras.coveredPlayerAuras[aura.spellID] or aura.duration >= 300 or aura.shouldConsolidate
           or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist))
       end,
       borderColor = function(aura)
@@ -507,8 +515,7 @@ _G.table.insert(groups, {
       numCols = 14,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.irrelevantAuras[aura.spellID] or auras.playerBuffBlacklist[aura.name] or
-          auras.longPlayerBuffBlacklist[aura.name]
+        return auras.irrelevantAuras[aura.spellID] or auras.coveredPlayerAuras[aura.spellID]
       end,
     }
   },
