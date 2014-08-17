@@ -5,21 +5,21 @@ local NinjaKittyAuras = _G.NinjaKittyAuras
 auras, groups, comparators, mutators, fakeAuras = {}, {}, {}, {}, {}
 
 -- Use this one for all buff groups. We never care about these auras.
-auras.generalBuffBlacklist = {
-  ["Precious's Ribbon"] = true,
-  ["Temporal Anomaly"] = true,
+auras.irrelevantAuras = {
+  [72968] = true, -- Precious's Ribbon
+  [70404] = true, -- Precious's Ribbon -- TODO: remove one of these?
+  [145389] = true, -- Temporal Anomaly
 }
--- TODO: Just gave generalAuraBlacklist?
 
 -- TODO: Use spell IDs.
 auras.playerBuffBlacklist = {
-  ["Aquatic Form"] = true,
+  --["Aquatic Form"] = true,
   ["Barkskin"] = true,
-  ["Bear Form"] = true,
+  --["Bear Form"] = true,
   ["Berserk"] = true,
   ["Berserking"] = true,
   ["Call of Conquest"] = true,
-  ["Cat Form"] = true,
+  --["Cat Form"] = true,
   ["Clearcasting"] = true,
   ["Dash"] = true,
   ["Dream of Cenarius"] = true,
@@ -38,13 +38,14 @@ auras.playerBuffBlacklist = {
   ["Stampeding Roar"] = true,
   ["Surge of Conquest"] = true,
   ["Survival Instincts"] = true,
-  ["Swift Flight Form"] = true,
+  --["Swift Flight Form"] = true,
   ["Synapse Springs"] = true,
   ["Tiger's Fury"] = true,
-  ["Travel Form"] = true,
+  --["Travel Form"] = true,
 }
 -- http://lua-users.org/wiki/SetOperations
 
+-- TODO: Use spell IDs.
 auras.longPlayerBuffBlacklist = {
   ["Leader of the Pack"] = true,
   --["Symbiosis"] = true,
@@ -60,14 +61,37 @@ auras.importantOwnDebuffs = {
   [770]  = true, -- Faerie Fire
 }
 
--- TODO.
 auras.roots = {
-
+  [96294]  = true, -- Chains of Ice
+  [339]    = true, -- Entangling Roots
+  [19975]  = true, -- Entangling Roots (Nature's Grasp). Nature's Grasp is 16689.
+  [113770] = true, -- Entangling Roots (Force of Nature). This spell ID is correct for Feral; TODO: also for Balance?
+  [102359] = true, -- Mass Entanglement
+  [53148]  = true, -- Charge (Tenacity pet). TODO: confirm spell ID.
+  [136634] = true, -- Narrow Escape. TODO: confirm spell ID.
+  [50245]  = true, -- Pin (Crab pet). TODO: confirm spell ID.
+  [90327]  = true, -- Lock Jaw (Dog pet). TODO: confirm spell ID.
+  [4167]   = true, -- Web (Spider pet). TODO: confirm spell ID.
+  [54706]  = true, -- Venom Web Spray (Silithid pet). TODO: confirm spell ID.
+  [33395]  = true, -- Freeze (Water Elemental). TODO: confirm spell ID.
+  [102051] = true, -- Frostjaw (Silence and Root). TODO: confirm spell ID.
+  [122]    = true, -- Frost Nova. TODO: confirm spell ID.
+  [116706] = true, -- Disable. TODO: confirm spell ID.
+  [113275] = true, -- Entangling Roots (Mistweaver Monk Symbiosis). TODO: confirm spell ID.
+  [87194]  = true, -- Glyph of Mind Blast. TODO: confirm spell ID.
+  [114404] = true, -- Void Tendril's Grasp. TODO: confirm spell ID.
+  [115197] = true, -- Partial Paralysis. TODO: confirm spell ID.
+  [63685]  = true, -- Freeze (Frost Shock with Frozen Power talent). TODO: confirm spell ID.
+  [107566] = true, -- Staggering Shout. TODO: confirm spell ID.
+  [105771] = true, -- Warbringer (Charge). TODO: confirm spell ID.
 }
 
--- TODO.
 auras.shortRoots = {
-
+  [45334]  = true, -- Immobilized (Bear Form Wild Charge)
+  [64803]  = true, -- Entrapment. TODO: confirm spell ID.
+  [111340] = true, -- Ice Ward. TODO: confirm spell ID.
+  [123407] = true, -- Spinning Fire Blossom. TODO: confirm spell ID.
+  [64695]  = true, -- Earthgrab. TODO: confirm spell ID.
 }
 
 auras.disarms = {
@@ -84,7 +108,7 @@ auras.disarms = {
 -- Full Crowd Control and Silences. Based on http://us.battle.net/wow/en/forum/topic/10195910192,
 -- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius.
 auras.fullCC = {
-  -- *Stuns*
+  -- *Stuns* --
   [108194] = true, -- Asphyxiate
   [47481]  = true, -- Gnaw (Ghoul)
   [91797]  = true, -- Monstrous Blow (Ghoul with Dark Transformation)
@@ -108,6 +132,7 @@ auras.fullCC = {
   [96201]  = true, -- Web Wrap (Shale Spider pet)
   [118271] = true, -- Combustion Impact
   [44572]  = true, -- Deep Freeze
+  [127361] = true, -- Bear Hug (Windwalker Monk Symbiosis)
   [119392] = true, -- Charging Ox Wave
   [122242] = true, -- Clash
   [120086] = true, -- Fists of Fury
@@ -123,26 +148,21 @@ auras.fullCC = {
   [89766]  = true, -- Axe Toss (Felguard)
   [30283]  = true, -- Shadowfury
   [22703]  = true, -- Infernal Awakening (Summon Infernal stun)
-  -- TODO: Which  is the real Showckwave?
   [46968]  = true, -- Shockwave
-  [132168] = true, -- Shockwave
-  -- TODO: Which  is the real Storm Bolt?
+  [132168] = true, -- Shockwave -- TODO: Which  is the real Showckwave?
   [107570] = true, -- Storm Bolt
-  [132169] = true, -- Storm Bolt
+  [132169] = true, -- Storm Bolt -- TODO: Which  is the real Storm Bolt?
   [20549]  = true, -- War Stomp (Tauren Racial)
-
-  [127361] = true, -- Bear Hug (Windwalker Monk Symbiosis)
-
-  -- *Stuns (Short)*
+  ---------------------
+  -- *Stuns (Short)* --
   [113953] = true, -- Paralysis (Paralytic Poison stun)
-  [96273]  = true, -- Charge Stun (Charge)
+  [7922]   = true, -- Charge Stun -- This spell ID appears to be correct (96273 isn't).
   [77505]  = true, -- Earthquake -- TODO: is this the correct ID?
   [118895] = true, -- Dragon Roar -- TODO: is this the correct ID?
-
-  -- *Mesmerizes*
+  ------------------
+  -- *Mesmerizes* --
   [2637]  = true, -- Hibernate
-  -- TODO: Which one do we need?
-  [55041]  = true, -- Freezing Trap Effect
+  [55041]  = true, -- Freezing Trap Effect -- TODO: Which one do we need?
   [1499]   = true, -- Freezing Trap Effect
   [3355]   = true, -- Freezing Trap (Trap Launcher)
   [60192]  = true, -- Freezing Trap (Trap Launcher)
@@ -162,15 +182,15 @@ auras.fullCC = {
   [51514]  = true, -- Hex
   [710]    = true, -- Banish
   [107079] = true, -- Quaking Palm (Pandaren Racial)
-
-  -- *Mesmerizes (Short)*
+  --------------------------
+  -- *Mesmerizes (Short)* --
   [99]     = true, -- Disorienting Roar
   [19503]  = true, -- Scatter Shot
   [31661]  = true, -- Dragon's Breath
   [123393] = true, -- Breath of Fire (Glyphed)
   [88625]  = true, -- Holy Word: Chastise
-
-  -- *Fears*
+  -------------
+  -- *Fears* --
   [113004] = true, -- Intimidating Roar (Druid Symbiosis)
   [113056] = true, -- Intimidating Roar (Druid Symbiosis)
   [1513]   = true, -- Scare Beast
@@ -187,19 +207,18 @@ auras.fullCC = {
   [115268] = true, -- Mesmerize (Shivarra)
   [6358]   = true, -- Seduction (Succubus)
   [5246]   = true, -- Intimidating Shout
-
-  -- *Horrors*
+  ---------------
+  -- *Horrors* --
   [111397] = true, -- Blood Horror
   [64044]  = true, -- Psychic Horror
   [87204]  = true, -- Sin and Punishment
   [6789]   = true, -- Mortal Coil
-
-  -- *Silences*
-                    -- Asphyxiate?
+  ----------------
+  -- *Silences* -- -- TODO: is there a silcence separate from the stun for Asphyxiate?
   [47476]   = true, -- Strangulate
   [114237]  = true, -- Glyph of Fae Silence
   [34490]   = true, -- Silencing Shot
-  [102051]  = true, -- Frostjaw
+  [102051]  = true, -- Frostjaw (Silence and Root)
   [55021]   = true, -- Silenced - Improved Counterspell
   [137460]  = true, -- Silenced (Ring of Peace)
   [116709]  = true, -- Spear Hand Strike
@@ -215,16 +234,15 @@ auras.fullCC = {
   [80483]   = true, -- Arcane Torrent (Blood Elf Racial, Hunter)
   [129597]  = true, -- Arcane Torrent (Blood Elf Racial, Monk)
   [155145]  = true, -- Arcane Torrent (Blood Elf Racial, Paladin)
-
-  -- *Cyclone*
+  ---------------
+  -- *Cyclone* --
   [33786]  = true, -- Cyclone
   [113506] = true, -- Cyclone (Symbiosis)
-
-  -- *Charms*
+  --------------
+  -- *Charms* --
   [605] = true, -- Dominate Mind
 }
 
--- TODO: Windwalk Totem?
 auras.immunities = {
   [108978] = true, -- Alter Time
   [110909] = true, -- Alter Time (actual buff)
@@ -267,6 +285,7 @@ auras.immunities = {
   [115176] = true, -- Zen Meditation
 }
 
+-- TODO: Might of Ursoc? Last Stand? Combat Insight?
 auras.defensives = {
   [108271] = true, -- Astral Shift
   [22812] = true,  -- Barkskin
@@ -279,6 +298,7 @@ auras.defensives = {
   [102342] = true, -- Ironbark
   [116849] = true, -- Life Cocoon
   [33206] = true,  -- Pain Suppression
+  [97463] = true,  -- Rallying Cry. Spell ID confirmed. 97462 is the actual spell.
   [53480] = true,  -- Roar of Sacrifice
   [30823] = true,  -- Shamanistic Rage
   [61336] = true,  -- Survival Instincts
@@ -287,7 +307,7 @@ auras.defensives = {
   [125174] = true, -- Touch of Karma (buff)
 }
 
--- TODO: Use spell IDs.
+-- TODO: Use spell IDs!
 mutators.generalBuffMutators = {
   ["Inner Fire"] = function(aura)
     aura.shouldConsolidate = 1
@@ -300,6 +320,7 @@ mutators.generalBuffMutators = {
   end,
 }
 
+-- TODO: Use spell IDs.
 mutators.debuffMutators = {
   ["Faerie Fire"] = function(aura)
     aura.caster = "player"
@@ -322,11 +343,11 @@ auras.targetDebuffBlacklist = {
 
 do
   -- http://www.wowhead.com/spell=1126/mark-of-the-wild#comments
-  local increasedStats = {
-    ["Mark of the Wild"] = true,
-    ["Legacy of the Emperor"] = true,
-    ["Blessing of Kings"] = true,
-    ["Embrace of the Shale Spider"] = true,
+  local increasedStats = { -- TODO: spell IDs?
+    ["Mark of the Wild"]                  = true,
+    ["Legacy of the Emperor"]             = true,
+    ["Blessing of Kings"]                 = true,
+    ["Embrace of the Shale Spider"]       = true,
     ["Xuen's Presence: Mark of the Wild"] = true,
   }
 
@@ -344,8 +365,8 @@ do
         return false
       end
       local inRange = _G.IsSpellInRange("Mark of the Wild", unit)
-      if not inRange or inRange == 0 then return false end -- TODO: this is not the correct range
-        -- and this isn't updated when it should be.
+      if not inRange or inRange == 0 then return false end -- TODO: this is not the correct range and this isn't updated
+                                                           -- when it should be.
       for k, _ in _G.pairs(increasedStats) do
         if _G.UnitAura(unit, k, nil , "HELPFUL") then
           return false
@@ -357,33 +378,28 @@ do
   }
 end
 
--- These order functions receive two arguments and must return true if the first argument should
--- come first in the sorted array. Note that Lua's table.sort is not a stable sort.
+-- These order functions receive two arguments and must return true if the first argument should come first in the
+-- sorted array. Note that Lua's table.sort is not a stable sort.
 
 comparators.longerFirst = function(aura1, aura2)
   if aura1.expires == 0 and aura2.expires == 0 then -- Neither aura expires.
-    return aura1.index < aura2.index
+    return aura1.index < aura2.index -- TODO: sort by name instead of index?
   elseif aura1.expires == 0 then -- Only aura1 is permanent.
     return true
   elseif aura2.expires == 0 then -- Only aura2 is permanent.
     return false
-  else -- Both auras expire.
-    return aura1.expires > aura2.expires
   end
+  return aura1.expires > aura2.expires -- Both auras expire.
 end
 
 -- Auras applied by the player first.
 comparators.defaultCompare = function(aura1, aura2)
-  if aura1.caster and aura1.caster == "player" and not (aura2.caster and aura2.caster == "player")
-  then
+  if aura1.caster and aura1.caster == "player" and not (aura2.caster and aura2.caster == "player") then
     return true
-  elseif aura2.caster and aura2.caster == "player" and
-    not (aura1.caster and aura1.caster == "player")
-  then
+  elseif aura2.caster and aura2.caster == "player" and not (aura1.caster and aura1.caster == "player") then
     return false
-  else -- Both auras or neither are player-applied.
-    return comparators.longerFirst(aura1, aura2)
   end
+  return comparators.longerFirst(aura1, aura2) -- Both auras or neither are player-applied.
 end
 
 comparators.buffsFirst = function(aura1, aura2)
@@ -392,379 +408,370 @@ comparators.buffsFirst = function(aura1, aura2)
   elseif aura1.filter == "HARMFUL" and aura2.filter == "HELPFUL" then
     return false
   end
-
   return comparators.longerFirst(aura1, aura2)
 end
 
 -- TODO: display defensives that aren't cast by player?
 _G.table.insert(groups, {
-  name = "NKPlayerCC",
   unit = "player",
-  --[[
-  parent = "NKPlayerFrame",
-  anchorPoint = "TOPLEFT",
-  relativePoint = "TOPRIGHT",
-  xOffset = 2,
-  yOffset = 0,
-  size = 32,
-  xGap = 32 + 2,
-  yGap = -(32 + 2),
-  --]]
-  ----[[
-  anchorPoint = "CENTER",
-  relativePoint = "CENTER",
-  xOffset = 0,
-  yOffset = -46, -- 44 + 2 = 46
-  size = 44,
-  xGap = (44 + 2),
-  yGap = -(44 + 2),
-  --]]
-  numRows = 1,
-  numCols = 4,
-  orientation = "HORIZONTAL",
-  filters = { "HARMFUL" },
-  compare = comparators.buffsFirst,
-  whitelist = function(aura)
-    return auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-      aura.spellID == 122470 --[[Touch of Karma]]
-  end,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
-})
-
--- TODO: filter auras that are also returned for the vehicle unit?
-_G.table.insert(groups, {
-  name = "NKPlayerAuras",
-  unit = "player",
-  parent = "NKPlayerFrame",
-  anchorPoint = "BOTTOMRIGHT",
-  relativePoint = "TOPRIGHT",
-  xOffset = 0,
-  yOffset = 2,
-  size = 28,
-  xGap = -(28 + 2),
-  yGap = (28 + 2),
-  numRows = 3,
-  numCols = 7,
-  orientation = "HORIZONTAL",
   filters = { "HELPFUL", "HARMFUL" },
-  compare = comparators.buffsFirst,
-  blacklist = function(aura)
-    return auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-      (aura.filter == "HELPFUL" and (auras.generalBuffBlacklist[aura.name] or
-      auras.playerBuffBlacklist[aura.name] or aura.duration >= 300 or aura.shouldConsolidate
-      or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist)))
-  end,
   mutators = mutators.generalBuffMutators,
   fakeAuras = {
     statsMissing = fakeAuras.statsMissing,
   },
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
+  -- TODO: allow black- and whitelists that apply to all displays in a group.
+  compare = comparators.buffsFirst,
+  displays = {
+    {
+      name = "NKAPlayerCC",
+      anchorPoint = "CENTER",
+      relativePoint = "CENTER",
+      xOffset = 0,
+      yOffset = -46, -- 44 + 2 = 46
+      size = 44,
+      xGap = (44 + 2),
+      yGap = -(44 + 2),
+      --]]
+      numRows = 1,
+      numCols = 4,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or aura.spellID == 122470 --[[Touch of Karma]] or
+          auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    { -- TODO: display some big defensives like Guardian Spirit and Pain Suppression here.
+      name = "NKAPrimaryPlayerAuras",
+      parent = "NKPlayerFrame",
+      anchorPoint = "TOPLEFT",
+      relativePoint = "TOPRIGHT",
+      xOffset = 2,
+      yOffset = 0,
+      size = 32,
+      xGap = 32 + 2,
+      yGap = -(32 + 2),
+      numRows = 1,
+      numCols = 4,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura) -- TODO.
+        return aura.name == "Guardian Spirit"
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    { -- TODO: filter auras that are also returned for the vehicle unit?
+      name = "NKASecondaryPlayerAuras",
+      parent = "NKPlayerFrame",
+      anchorPoint = "BOTTOMRIGHT",
+      relativePoint = "TOPRIGHT",
+      xOffset = 0,
+      yOffset = 2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = (28 + 2),
+      numRows = 3,
+      numCols = 7,
+      orientation = "HORIZONTAL",
+      blacklist = function(aura)
+        return aura.filter == "HELPFUL" and (auras.irrelevantAuras[aura.spellID] or
+          auras.playerBuffBlacklist[aura.name] or aura.duration >= 300 or aura.shouldConsolidate
+          or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist))
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    {
+      name = "NKALongPlayerBuffs",
+      anchorPoint = "TOPLEFT",
+      relativePoint = "TOPLEFT",
+      xOffset = 2,
+      yOffset = -2,
+      size = 28,
+      xGap = (28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 14,
+      orientation = "HORIZONTAL",
+      blacklist = function(aura)
+        return auras.irrelevantAuras[aura.spellID] or auras.playerBuffBlacklist[aura.name] or
+          auras.longPlayerBuffBlacklist[aura.name]
+      end,
+    }
+  },
 })
 
 _G.table.insert(groups, {
-  name = "NKLongPlayerBuffs",
-  unit = "player",
-  anchorPoint = "TOPLEFT",
-  relativePoint = "TOPLEFT",
-  xOffset = 2,
-  yOffset = -2,
-  size = 28,
-  xGap = (28 + 2),
-  yGap = -(28 + 2),
-  numRows = 1,
-  numCols = 14,
-  orientation = "HORIZONTAL",
-  filters = { "HELPFUL" },
-  compare = comparators.defaultCompare,
-  blacklist = function(aura)
-    return auras.generalBuffBlacklist[aura.name] or
-      auras.longPlayerBuffBlacklist[aura.name] or
-      (aura.duration < 300 and not aura.shouldConsolidate)
-  end,
-  mutators = mutators.generalBuffMutators,
-})
-
-_G.table.insert(groups, {
-  name = "NKVehicleAuras",
   unit = "vehicle",
-  parent = "NKVehicleFrame",
-  anchorPoint = "BOTTOMRIGHT",
-  relativePoint = "TOPRIGHT",
-  xOffset = 0,
-  yOffset = 2,
-  size = 28,
-  xGap = -(28 + 2),
-  yGap = (28 + 2),
-  numRows = 3,
-  numCols = 7,
-  orientation = "HORIZONTAL",
   filters = { "HELPFUL", "HARMFUL" },
   compare = comparators.buffsFirst,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
+  displays = {
+    {
+      name = "NKAVehicleAuras",
+      parent = "NKVehicleFrame",
+      anchorPoint = "BOTTOMRIGHT",
+      relativePoint = "TOPRIGHT",
+      xOffset = 0,
+      yOffset = 2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = (28 + 2),
+      numRows = 3,
+      numCols = 7,
+      orientation = "HORIZONTAL",
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+  },
 })
 
 _G.table.insert(groups, {
-  name = "NKTargetAuras",
   unit = "target",
-  parent = "NKTargetFrame",
-  anchorPoint = "TOPRIGHT",
-  relativePoint = "TOPLEFT",
-  xOffset = -2,
-  yOffset = 0,
-  size = 32,
-  xGap = -(32 + 2),
-  yGap = -(32 + 2),
-  numRows = 1,
-  numCols = 4,
-  orientation = "HORIZONTAL",
   filters = { "HELPFUL", "HARMFUL" },
-  compare = comparators.buffsFirst,
-  whitelist = function(aura)
-    return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or
-      auras.disarms[aura.spellID] or auras.defensives[aura.spellID]
-  end,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
-})
-
-_G.table.insert(groups, {
-  name = "NKOtherTargetAuras",
-  unit = "target",
-  parent = "NKTargetFrame",
-  anchorPoint = "BOTTOMLEFT",
-  relativeTo = "NKTargetFrame",
-  relativePoint = "TOPLEFT",
-  xOffset = 0,
-  yOffset = 2,
-  size = 28,
-  xGap = (28 + 2),
-  yGap = (28 + 2),
-  numRows = 3,
-  numCols = 7,
-  orientation = "HORIZONTAL",
-  filters = { "HELPFUL", "HARMFUL" },
-  compare = comparators.buffsFirst,
-  blacklist = function(aura)
-    return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or
-      auras.disarms[aura.spellID] or auras.defensives[aura.spellID] or
-      auras.generalBuffBlacklist[aura.name] or
-      (aura.filter == "HELPFUL" and aura.duration >= 300) or aura.shouldConsolidate or
-      (auras.targetDebuffBlacklist[aura.spellID] and aura.caster == "player")
-    --[[
-    return (aura.filter == "HELPFUL" and (auras.generalBuffBlacklist[aura.name] or
-      auras.immunities[aura.spellID] or aura.duration >= 300 or aura.shouldConsolidate)) or
-      (aura.filter == "HARMFUL" and
-      ((auras.targetDebuffBlacklist[aura.spellID] and aura.caster == "player") or
-      auras.fullCC[aura.spellID] or auras.disarms[aura.spellID]))
-    --]]
-  end,
   mutators = mutators.generalBuffMutators,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
-})
-
-_G.table.insert(groups, {
-  name = "NKLongTargetBuffs",
-  unit = "target",
-  parent = "NKTargetFrame",
-  anchorPoint = "TOPRIGHT",
-  relativeTo = "UIParent",
-  relativePoint = "TOPRIGHT",
-  xOffset = -2,
-  yOffset = -2,
-  size = 28,
-  xGap = -(28 + 2),
-  yGap = -(28 + 2),
-  numRows = 1,
-  numCols = 16,
-  orientation = "HORIZONTAL",
-  filters = { "HELPFUL" },
-  compare = comparators.longerFirst,
-  blacklist = function(aura)
-    return auras.generalBuffBlacklist[aura.name] or (aura.duration < 300 and not
-      aura.shouldConsolidate)
-  end,
-  mutators = mutators.generalBuffMutators,
-})
-
-_G.table.insert(groups, {
-  name = "NKFocusAuras",
-  unit = "focus",
-  parent = "NKFocusFrame",
-  anchorPoint = "TOPRIGHT",
-  relativePoint = "TOPLEFT",
-  xOffset = -2,
-  yOffset = 0,
-  size = 32,
-  xGap = -(32 + 2),
-  yGap = -(32 + 2),
-  numRows = 1,
-  numCols = 4,
-  orientation = "HORIZONTAL",
-  filters = { "HELPFUL", "HARMFUL" },
   compare = comparators.buffsFirst,
-  blacklist = function(aura)
-    return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellID]) or
-    (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
-    auras.disarms[aura.spellID])
-  end,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
+  displays = {
+    {
+      name = "NKATargetAuras",
+      parent = "NKTargetFrame",
+      anchorPoint = "TOPRIGHT",
+      relativePoint = "TOPLEFT",
+      xOffset = -2,
+      yOffset = 0,
+      size = 32,
+      xGap = -(32 + 2),
+      yGap = -(32 + 2),
+      numRows = 1,
+      numCols = 4,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or
+          auras.disarms[aura.spellID] or auras.defensives[aura.spellID]
+          --or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    {
+      name = "NKAOtherTargetAuras",
+      parent = "NKTargetFrame",
+      anchorPoint = "BOTTOMLEFT",
+      relativeTo = "NKTargetFrame",
+      relativePoint = "TOPLEFT",
+      xOffset = 0,
+      yOffset = 2,
+      size = 28,
+      xGap = (28 + 2),
+      yGap = (28 + 2),
+      numRows = 3,
+      numCols = 7,
+      orientation = "HORIZONTAL",
+      blacklist = function(aura)
+        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
+          auras.defensives[aura.spellID] or auras.irrelevantAuras[aura.spellID] or
+          (aura.filter == "HELPFUL" and aura.duration >= 300) or aura.shouldConsolidate or
+          (auras.targetDebuffBlacklist[aura.spellID] and aura.caster == "player")
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    {
+      name = "NKALongTargetBuffs",
+      parent = "NKTargetFrame",
+      anchorPoint = "TOPRIGHT",
+      relativeTo = "UIParent",
+      relativePoint = "TOPRIGHT",
+      xOffset = -2,
+      yOffset = -2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 16,
+      orientation = "HORIZONTAL",
+      blacklist = function(aura)
+        return auras.irrelevantAuras[aura.spellID] or (aura.duration < 300 and not aura.shouldConsolidate)
+      end,
+    },
+  },
 })
 
 _G.table.insert(groups, {
-  name = "NKOtherFocusAuras",
   unit = "focus",
-  parent = "NKFocusFrame",
-  anchorPoint = "TOPRIGHT",
-  relativePoint = "BOTTOMRIGHT",
-  xOffset = 0,
-  yOffset = -2,
-  size = 28,
-  xGap = -(28 + 2),
-  yGap = -(28 + 2),
-  numRows = 1,
-  numCols = 4,
-  orientation = "HORIZONTAL",
   filters = { "HELPFUL", "HARMFUL" },
-  compare = comparators.buffsFirst,
-  blacklist = function(aura)
-    return aura.filter == "HELPFUL" or (aura.filter == "HARMFUL" and
-    (not auras.importantOwnDebuffs[aura.spellID] or aura.caster ~= "player"))
-  end,
   mutators = mutators.debuffMutators,
-  borderColor = function(aura)
-    if aura.filter == "HARMFUL" then
-      return 192, 0, 0
-    end
-    return 0, 0, 0
-  end,
+  compare = comparators.buffsFirst,
+  displays = {
+    {
+      name = "NKAFocusAuras",
+      parent = "NKFocusFrame",
+      anchorPoint = "TOPRIGHT",
+      relativePoint = "TOPLEFT",
+      xOffset = -2,
+      yOffset = 0,
+      size = 32,
+      xGap = -(32 + 2),
+      yGap = -(32 + 2),
+      numRows = 1,
+      numCols = 4,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return aura.filter == "HELPFUL" and auras.immunities[aura.spellID] or
+          aura.filter == "HARMFUL" and (auras.fullCC[aura.spellID] or auras.disarms[aura.spellID])
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+    {
+      name = "NKAOtherFocusAuras",
+      parent = "NKFocusFrame",
+      anchorPoint = "TOPRIGHT",
+      relativePoint = "BOTTOMRIGHT",
+      xOffset = 0,
+      yOffset = -2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 4,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return aura.filter == "HARMFUL" and auras.importantOwnDebuffs[aura.spellID] and aura.caster == "player"
+      end,
+      borderColor = function(aura)
+        if aura.filter == "HARMFUL" then
+          return 192, 0, 0
+        end
+        return 0, 0, 0
+      end,
+    },
+  },
 })
 
--- Define groups for party members.
 for i = 1, 4 do
   _G.table.insert(groups, {
-    name = "NKParty" .. i .. "Auras",
     unit = "party" .. i,
-    parent = "NKParty" .. i .. "Frame",
-    anchorPoint = "TOPLEFT",
-    relativePoint = "TOPRIGHT",
-    xOffset = 2,
-    yOffset = 0,
-    size = 32,
-    xGap = 32 + 2,
-    yGap = -(32 + 2),
-    numRows = 1,
-    numCols = 4,
-    orientation = "HORIZONTAL",
-    filters = { "HARMFUL" },
-    compare = comparators.buffsFirst,
-    blacklist = function(aura)
-      return aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
-      auras.disarms[aura.spellID]
-    end,
-    borderColor = function(aura)
-      if aura.filter == "HARMFUL" then
-        return 192, 0, 0
-      end
-      return 0, 0, 0
-    end,
-  })
-  _G.table.insert(groups, {
-    name = "NKOtherParty" .. i .. "Auras",
-    unit = "party" .. i,
-    parent = "NKParty" .. i .. "Frame",
-    anchorPoint = "BOTTOMRIGHT",
-    relativePoint = "TOPRIGHT",
-    xOffset = 0,
-    yOffset = 2,
-    size = 28,
-    xGap = -(28 + 2),
-    yGap = -(28 + 2),
-    numRows = 1,
-    numCols = 7,
-    orientation = "HORIZONTAL",
     filters = { "HELPFUL", "HARMFUL" },
-    compare = comparators.buffsFirst,
     fakeAuras = {
       statsMissing = fakeAuras.statsMissing,
     },
-    blacklist = function(aura)
-      return (aura.filter == "HELPFUL" and (aura.duration >= 300 or aura.shouldConsolidate or
-        aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= "Curse" and
-        aura.dispelType ~= "Poison")
-    end,
-    borderColor = function(aura)
-      if aura.filter == "HARMFUL" then
-        return 192, 0, 0
-      end
-      return 0, 0, 0
-    end,
-    --[[
-    hide = function()
-      return _G.GetNumGroupMembers() > 5
-    end,
-    ]]
-  })
-end
---
--- Define groups for arena opponents.
-for i = 1, 3 do
-  _G.table.insert(groups, {
-    name = "NKArena" .. i .. "Auras",
-    unit = "arena" .. i,
-    parent = "NKArena" .. i .. "Frame",
-    anchorPoint = "TOPRIGHT",
-    relativePoint = "TOPLEFT",
-    xOffset = -2,
-    yOffset = 0,
-    size = 32,
-    xGap = -(32 + 2),
-    yGap = -(32 + 2),
-    numRows = 1,
-    numCols = 4,
-    orientation = "HORIZONTAL",
-    filters = { "HELPFUL", "HARMFUL" },
     compare = comparators.buffsFirst,
-    blacklist = function(aura)
-      return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellID]) or
-        (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
-        auras.disarms[aura.spellID])
-    end,
-    borderColor = function(aura)
-      if aura.filter == "HARMFUL" then
-        return 192, 0, 0
-      end
-      return 0, 0, 0
-    end,
+    displays = {
+      {
+        name = "NKAParty" .. i .. "Auras",
+        parent = "NKParty" .. i .. "Frame",
+        anchorPoint = "TOPLEFT",
+        relativePoint = "TOPRIGHT",
+        xOffset = 2,
+        yOffset = 0,
+        size = 32,
+        xGap = 32 + 2,
+        yGap = -(32 + 2),
+        numRows = 1,
+        numCols = 4,
+        orientation = "HORIZONTAL",
+        whitelist = function(aura)
+          return aura.filter == "HARMFUL" and (auras.fullCC[aura.spellID] or auras.disarms[aura.spellID])
+        end,
+        borderColor = function(aura)
+          if aura.filter == "HARMFUL" then
+            return 192, 0, 0
+          end
+          return 0, 0, 0
+        end,
+      },
+      {
+        name = "NKAOtherParty" .. i .. "Auras",
+        parent = "NKParty" .. i .. "Frame",
+        anchorPoint = "BOTTOMRIGHT",
+        relativePoint = "TOPRIGHT",
+        xOffset = 0,
+        yOffset = 2,
+        size = 28,
+        xGap = -(28 + 2),
+        yGap = -(28 + 2),
+        numRows = 1,
+        numCols = 7,
+        orientation = "HORIZONTAL",
+        blacklist = function(aura)
+          return (aura.filter == "HELPFUL" and (aura.duration >= 300 or aura.shouldConsolidate or
+            aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= "Curse" and
+            aura.dispelType ~= "Poison")
+        end,
+        borderColor = function(aura)
+          if aura.filter == "HARMFUL" then
+            return 192, 0, 0
+          end
+          return 0, 0, 0
+        end,
+      },
+    },
   })
 end
 
--- vim: tw=120 sw=2 expandtab
+-- Define groups for arena opponents.
+for i = 1, 3 do
+  _G.table.insert(groups, {
+    unit = "arena" .. i,
+    filters = { "HELPFUL", "HARMFUL" },
+    compare = comparators.buffsFirst,
+    displays = {
+      {
+        name = "NKArena" .. i .. "Auras",
+        parent = "NKArena" .. i .. "Frame",
+        anchorPoint = "TOPRIGHT",
+        relativePoint = "TOPLEFT",
+        xOffset = -2,
+        yOffset = 0,
+        size = 32,
+        xGap = -(32 + 2),
+        yGap = -(32 + 2),
+        numRows = 1,
+        numCols = 4,
+        orientation = "HORIZONTAL",
+        blacklist = function(aura)
+          return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellID]) or
+            (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
+            auras.disarms[aura.spellID])
+        end,
+        borderColor = function(aura)
+          if aura.filter == "HARMFUL" then
+            return 192, 0, 0
+          end
+          return 0, 0, 0
+        end,
+      },
+    },
+  })
+end
+
+-- vim: tw=120 sw=2 et
