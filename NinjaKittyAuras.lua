@@ -1,5 +1,12 @@
+-- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active).
+
 NinjaKittyAuras = { _G = _G }
 setfenv(1, NinjaKittyAuras)
+
+local keys = { "name", "rank", "icon", "count", "dispelType", "duration", "expires", "caster", "isStealable",
+  "shouldConsolidate", "spellID", "canApplyAura", "isBossDebuff", "value1", "value2", "value3", "filter", "index" }
+
+local maxDisplayedStacks = 5
 
 -- http://wowprogramming.com/snippets/Scan_a_tooltip_15
 -- http://wowpedia.org/UIOBJECT_GameTooltip#Hidden_tooltip_for_scanning
@@ -19,25 +26,56 @@ function blacklistByTooltip(unit, index, filter, blacklist)
   return false
 end
 
+--[=[
 local backdrop = {
-  bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-  edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+  bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
+  edgeFile = [[Interface\ChatFrame\ChatFrameBackground]],
   tile = false,
   --tileSize = 32,
   edgeSize = 1,
-  insets = {
-    left = 0,
-    right = 0,
-    top = 0,
-    bottom = 0,
-  },
+  insets = { left = 0, right = 0, top = 0, bottom = 0, },
 }
+]=]
+
+local function setBorderColor(auraFrame, red, green, blue, alpha)
+  alpha = alpha or 1
+  auraFrame.BorderTop:SetTexture(red, green, blue, alpha)
+  auraFrame.BorderRight:SetTexture(red, green, blue, alpha)
+  auraFrame.BorderBottom:SetTexture(red, green, blue, alpha)
+  auraFrame.BorderLeft:SetTexture(red, green, blue, alpha)
+end
+
+local function NKAuraButton_OnUpdate(self, elapsed)
+  local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
+  if seconds > 99 then
+    self.DurationBackground:Hide()
+    self.Duration:Hide()
+    return
+  end
+  self.Duration:SetText(_G.tostring(seconds))
+  local width = self.Duration:GetStringWidth()
+  if width % 2 == 1 then
+    width = width + 1
+  end
+  local height = self.Duration:GetStringHeight()
+  self.DurationBackground:SetSize(width, height)
+end
 
 local function initDisplay(display, group)
   local parent = display.parent and _G[display.parent] or _G.UIParent
 
-  display.anchorFrame = _G.CreateFrame("Frame", display.name, parent)
-  display.anchorFrame:SetFrameLevel(10)
+  display.wrapperFrame = _G.CreateFrame("Frame", display.name, parent)
+  display.wrapperFrame:SetFrameLevel(10)
+
+  -- When the display is implicitly hidden due to a parent frame being hidden, hide it explicitly. Otherwise it will be
+  -- shown again when the parent frame becomes visible, even thought we didn't update it.  TODO: isn't that fine?
+  display.wrapperFrame:SetScript("OnHide", function(self)
+    --self:Hide()
+  end)
+  display.wrapperFrame:SetScript("OnShow", function(self)
+    -- ...
+  end)
+
   do
     local relativeTo = (display.relativeTo and _G[display.relativeTo]) or (display.parent and _G[display.parent]) or
       _G.UIParent
@@ -54,15 +92,15 @@ local function initDisplay(display, group)
       yOffset = yOffset + 1
     end
     if display.orientation == "HORIZONTAL" then
-      display.anchorFrame:SetPoint(display.anchorPoint, relativeTo, display.relativePoint, xOffset, yOffset)
-      display.anchorFrame:SetSize(2 + display.size + (display.numCols - 1) * _G.math.abs(display.xGap), 2)
+      display.wrapperFrame:SetPoint(display.anchorPoint, relativeTo, display.relativePoint, xOffset, yOffset)
+      display.wrapperFrame:SetSize(2 + display.size + (display.numCols - 1) * _G.math.abs(display.xGap), 2)
     elseif display.orientation == "VERTICAL" then
-      _G.assert(false) -- TODO.
+      _G.error("Not implemented.") -- TODO.
     end
 
     --[[
-    local texture = display.anchorFrame:CreateTexture(nil, "OVERLAY")
-    texture:SetParent(display.anchorFrame)
+    local texture = display.wrapperFrame:CreateTexture(nil, "OVERLAY")
+    texture:SetParent(display.wrapperFrame)
     texture:SetAllPoints()
     texture:SetTexture(1.0, 1.0, 1.0, 0.3)
     --]]
@@ -72,18 +110,20 @@ local function initDisplay(display, group)
   display.frames = {}
 
   for i = 1, display.numRows * display.numCols do
-    local frame = _G.CreateFrame("Button", display.name .. i, display.anchorFrame)
-    frame:SetFrameLevel(display.anchorFrame:GetFrameLevel() - 1)
+    local frame = _G.CreateFrame("Button", display.name .. i, display.wrapperFrame, "NKAuraButtonTemplate")
+    --frame:SetFrameLevel(display.wrapperFrame:GetFrameLevel() - 1)
     frame:SetSize(display.size, display.size)
-    frame:EnableMouse(true)
+    --frame:EnableMouse(true)
     frame:RegisterForClicks("RightButtonDown")
-    frame:Hide()
+    --frame:Hide()
 
+    --[[
     if display.borderColor then
       frame:SetBackdrop(backdrop)
       frame:SetBackdropBorderColor(0, 0, 0)
       frame:SetBackdropColor(0, 0, 0, 0)
     end
+    ]]
 
     frame:SetScript("OnEnter", function(self, motion)
       if group.unit and self.auraIndex and self.auraFilter then
@@ -107,13 +147,6 @@ local function initDisplay(display, group)
       end
     end)
 
-    frame.icon = frame:CreateTexture(nil, "BACKGROUND")
-    frame.icon:SetAllPoints(frame)
-
-    frame.cooldown = _G.CreateFrame("Cooldown", display.name .. i .. "Cooldown", frame)
-    frame.cooldown:SetReverse(true)
-    frame.cooldown:SetAllPoints(frame)
-
     _G.table.insert(display.frames, frame)
   end
 
@@ -134,7 +167,7 @@ local function initDisplay(display, group)
     for i = 0, display.numRows - 1 do
       for j = 1, display.numCols do
         local frame = display.frames[i * display.numCols + j]
-        frame:SetPoint(anchorPoint, display.anchorFrame, anchorPoint, xOffset, yOffset)
+        frame:SetPoint(anchorPoint, display.wrapperFrame, anchorPoint, xOffset, yOffset)
         xOffset = xOffset + display.xGap
       end
       xOffset = display.xGap > 0 and 1 or -1
@@ -156,7 +189,11 @@ local function initGroup(group)
       elseif not aura1.name and not aura2.name then
         return false
       end
-      return comparator(aura1, aura2)
+      local result = comparator(aura1, aura2)
+      if result then
+        return result
+      end
+      return nil -- TODO.
     end
   end
   for _, display in _G.ipairs(group.displays) do
@@ -164,7 +201,7 @@ local function initGroup(group)
   end
 end
 
-local auras, maxAuras, numAuras = {}, 80
+local auras, maxAuras, numAuras = {}, 100 -- TODO: do we need a maxAuras constant?
 for i = 1, maxAuras do
   auras[i] = {}
 end
@@ -195,7 +232,27 @@ local function GetAuras(group)
         end
       end
 
+      aura.isExtraStack = nil
+      local j = i + _G.math.min(aura.count or 1, maxDisplayedStacks)
       i = i + 1
+      --[[
+      -- TODO: implement some sort of blacklist for auras where we don't care about stacks. The Tigereye Brew damage
+      -- buff stacks up to 10 times; it could be reasonable to add an aura for every second stack.
+      if aura.name ~= "Weakened Armor" and aura.name ~= "Agony" and aura.name ~= "Prayer of Mending" and
+        aura.name ~= "Tiger Strikes" and aura.count <= maxDisplayedStacks
+      then
+        while i < j do
+          -- "for k, v in _G.pairs(aura) do" doesn't do it because it will fail to changes entries in auras[i] to nil that
+          -- aren't present in aura.
+          for _, key in _G.ipairs(keys) do
+            auras[i][key] = aura[key]
+          end
+          auras[i].isExtraStack = true
+          i = i + 1
+        end
+      end
+      --]]
+
       queryIndex = queryIndex + 1
     end
   end
@@ -204,9 +261,13 @@ local function GetAuras(group)
     for _, fakeAura in _G.pairs(group.fakeAuras) do
       if i > maxAuras then break end
       if fakeAura.present(group.unit) then
-        for k, v in _G.pairs(fakeAura) do
-          auras[i][k] = v
+        auras[i].isExtraStack = nil
+        for _, key in _G.ipairs(keys) do
+          auras[i][key] = fakeAura[key]
         end
+        --[[for k, v in _G.pairs(fakeAura) do
+          auras[i][k] = v
+        end]]
         auras[i].index = i
         i = i + 1
       end
@@ -256,14 +317,41 @@ local function updateDisplay(display, group)
       frame.auraIndex  = aura.index
       frame.auraFilter = aura.filter
 
-      frame.icon:SetTexture(aura.icon)
+      frame.Icon:SetTexture(aura.icon)
+
+      if aura.isExtraStack then
+        frame.Icon:SetAlpha(.75)
+        --_G.SetDesaturation(frame.Icon, true) -- http://wowprogramming.com/docs/widgets/Texture/SetDesaturated
+      else
+        frame.Icon:SetAlpha(1)
+        --_G.SetDesaturation(frame.Icon)
+      end
+
+      if aura.count and aura.count > 1 then
+        frame.CountBackground:Show()
+        frame.Count:Show()
+        frame.Count:SetText(aura.count)
+        local width = frame.Count:GetStringWidth()
+        if width % 2 == 1 then
+          width = width + 1
+        end
+        local height = frame.Count:GetStringHeight()
+        frame.CountBackground:SetSize(width, height)
+      else
+        frame.CountBackground:Hide()
+        frame.Count:Hide()
+      end
 
       if display.borderColor then
-        frame:SetBackdropBorderColor(display.borderColor(aura))
+        --frame:SetBackdropBorderColor(display.borderColor(aura))
+        setBorderColor(frame, display.borderColor(aura))
       end
 
       if aura.duration == 0 and aura.expires == 0 then
-        frame.cooldown:Hide()
+        frame.Cooldown:Hide()
+        frame.DurationBackground:Hide()
+        frame.Duration:Hide()
+        frame:SetScript("OnUpdate", nil)
       elseif aura.duration == 0 then -- We only got the time at which the aura will expire.
         _G.error()
       elseif aura.expires == 0 then -- We only got a duration.
@@ -286,10 +374,16 @@ local function updateDisplay(display, group)
         else
           duration = aura.duration
         end
-        frame.cooldown:Show()
-        _G.CooldownFrame_SetTimer(frame.cooldown, start, duration, true)
+        frame.DurationBackground:Show()
+        frame.Duration:Show()
+        frame.expires = aura.expires
+        frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
+        --_G.CooldownFrame_SetTimer(frame.Cooldown, start, duration, true)
       else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.
-        frame.cooldown:Hide()
+        frame.Cooldown:Hide()
+        frame.DurationBackground:Hide()
+        frame.Duration:Hide()
+        frame:SetScript("OnUpdate", nil)
       end
       if frame:IsMouseOver() then
         local handler = frame:GetScript("OnEnter")
@@ -309,19 +403,19 @@ local function updateDisplay(display, group)
     local numAuras = frameIndex - 1
     if display.numRows == 1 then
       local width = 2 + (numAuras >= 1 and display.size + _G.math.abs(display.xGap) * (numAuras - 1) or 0)
-      display.anchorFrame:SetWidth(width)
+      display.wrapperFrame:SetWidth(width)
     end
     local numFrames = _G.math.min(numAuras, display.numRows * display.numCols)
     local numRows = _G.math.ceil(numFrames / display.numCols)
     local height = 2 + (numRows >= 1 and display.size + _G.math.abs(display.yGap) * (numRows - 1) or 0)
-    display.anchorFrame:SetHeight(height)
+    display.wrapperFrame:SetHeight(height)
   elseif display.orientation == "VERTICAL" then
     _G.error("Not implemented.") -- TODO.
   end
 
   while frame and frame:IsShown() do
-    --frame.icon:SetTexture(nil)
-    --_G.CooldownFrame_SetTimer(frame.cooldown) -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
+    --frame.Icon:SetTexture(nil)
+    --_G.CooldownFrame_SetTimer(frame.Cooldown) -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
     frame:Hide()
     frameIndex = frameIndex + 1
     frame = display.frames[frameIndex]
@@ -330,12 +424,21 @@ end
 
 local function updateGroups(unitID)
   if unitID and not _G.UnitExists(unitID) then
-    -- ...
+    --[[
+    for _, group in _G.ipairs(groups) do
+      if group.unit == unitID then
+        for _, display in _G.ipairs(group.displays) do
+          display.wrapperFrame:Hide()
+        end
+      end
+    end
+    ]]
   else
     for _, group in _G.ipairs(groups) do
       if not unitID or group.unit == unitID then
         GetAuras(group) -- Initialize the auras table and the numAuras variable.
         for _, display in _G.ipairs(group.displays) do
+          display.wrapperFrame:Show()
           updateDisplay(display, group)
         end
       end
@@ -353,37 +456,20 @@ function handlerFrame:ADDON_LOADED(name)
     initGroup(group)
   end
 
-  handlerFrame:RegisterEvent("PLAYER_LOGIN")
-  --handlerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  --handlerFrame:RegisterEvent("PLAYER_LOGIN")
+  handlerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
   --handlerFrame:RegisterEvent("PLAYER_ALIVE")
 
   handlerFrame:RegisterEvent("UNIT_AURA")
   handlerFrame:RegisterEvent("UNIT_CONNECTION")
   handlerFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
   handlerFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+  --handlerFrame:RegisterEvent("VEHICLE_UPDATE")
+  --handlerFrame:RegisterEvent("PLAYER_GAINS_VEHICLE_DATA")
+  handlerFrame:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player")
 
   -- Fires when the composition of the party changes?
   handlerFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-
-  --[=[
-  -- http://wowpedia.org/SecureStateDriver
-  -- http://wowpedia.org/API_SecureCmdOptionParse
-  local stateHandler = _G.CreateFrame("Frame", nil, nil, "SecureHandlerStateTemplate")
-
-  function stateHandler:onNoExists(unitID)
-    updateGroups(unitID)
-  end
-
-  for _, unit in _G.ipairs({"target", "focus", "arena1", "arena2", "arena3", "arena4", "arena5"}) do
-    stateHandler:SetAttribute("_onstate-" .. unit .. "noexists", [[
-      if newstate == "noexists" then
-        self:CallMethod("onNoExists","]] .. unit .. [[")
-      end
-    ]])
-    _G.RegisterStateDriver(stateHandler, unit .. "noexists",
-      "[@" .. unit .. ",exists]exists;noexists")
-  end
-  ]=]
 
   self.ADDON_LOADED = nil
 end
@@ -393,10 +479,6 @@ function handlerFrame:PLAYER_LOGIN()
 end
 
 function handlerFrame:PLAYER_ENTERING_WORLD()
-  updateGroups()
-end
-
-function handlerFrame:PLAYER_ALIVE()
   updateGroups()
 end
 
@@ -420,14 +502,19 @@ function handlerFrame:PLAYER_FOCUS_CHANGED()
   --end
 end
 
+function handlerFrame:UNIT_ENTERED_VEHICLE(unit, ...)
+  _G.assert(unit == "player")
+  _G.assert(_G.UnitExists("vehicle")) -- TODO: fails sometimes. E.g. Darkmoon Faire Tonk Challenge.
+  updateGroups("vehicle")
+end
+
 function handlerFrame:GROUP_ROSTER_UPDATE()
   for i = 1, 4 do
     updateGroups("party" .. i)
   end
 end
 
--- TODO.
-function handlerFrame:ARENA_OPPONENT_UPDATE()
+function handlerFrame:ARENA_OPPONENT_UPDATE() -- TODO?
   -- ...
 end
 

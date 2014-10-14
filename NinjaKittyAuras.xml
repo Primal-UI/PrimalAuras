@@ -1,0 +1,131 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
+  <Font name="NKDurationFont" font="Interface\AddOns\NinjaKittyMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
+  virtual="true">
+    <FontHeight>
+      <AbsValue val="14"/>
+    </FontHeight>
+    <!--
+    <Shadow>
+      <Offset>
+        <AbsDimension x="1" y="-1"/>
+      </Offset>
+      <Color r="0" g="0" b="0"/>
+    </Shadow>
+    -->
+  </Font>
+
+  <Font name="NKDurationFontLeft" inherits="NKDurationFont" justifyH="LEFT" virtual="true"/>
+  <Font name="NKDurationFontRight" inherits="NKDurationFont" justifyH="RIGHT" virtual="true"/>
+  <Font name="NKDurationFontCenter" inherits="NKDurationFont" justifyH="CENTER" virtual="true"/>
+
+  <FontString name="NKDurationFontStringLeft" inherits="NKDurationFontLeft" wordwrap="false" virtual="true"/>
+  <FontString name="NKDurationFontStringRight" inherits="NKDurationFontRight" wordwrap="false" virtual="true"/>
+  <FontString name="NKDurationFontStringCenter" inherits="NKDurationFontCenter" wordwrap="false" virtual="true"/>
+
+  <Font name="NKCountFont" font="Interface\AddOns\NinjaKittyMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
+  virtual="true">
+    <FontHeight>
+      <AbsValue val="14"/>
+    </FontHeight>
+    <!-- <Color r="1" g="1" b="1" a="1"/> -->
+  </Font>
+
+  <Font name="NKCountFontLeft" inherits="NKCountFont" justifyH="LEFT" virtual="true"/>
+  <Font name="NKCountFontRight" inherits="NKCountFont" justifyH="RIGHT" virtual="true"/>
+  <Font name="NKCountFontCenter" inherits="NKCountFont" justifyH="CENTER" virtual="true"/>
+
+  <FontString name="NKCountFontStringLeft" inherits="NKCountFontLeft" wordwrap="false" virtual="true"/>
+  <FontString name="NKCountFontStringRight" inherits="NKCountFontRight" wordwrap="false" virtual="true"/>
+  <FontString name="NKCountFontStringCenter" inherits="NKCountFontCenter" wordwrap="false" virtual="true"/>
+
+  <Button name="NKAuraButtonTemplate" frameLevel="10" enableMouse="true" hidden="true" virtual="true">
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture parentKey="Icon" setAllPoints="true"/>
+      </Layer>
+      <Layer level="BORDER">
+        <Texture parentKey="BorderTop">
+          <Size y="1"/>
+          <Anchors>
+            <Anchor point="TOPLEFT"/>
+            <Anchor point="TOPRIGHT"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="1"/>
+        </Texture>
+        <Texture parentKey="BorderRight">
+          <Size x="1"/>
+          <Anchors>
+            <Anchor point="TOPRIGHT"/>
+            <Anchor point="BOTTOMRIGHT"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="1"/>
+        </Texture>
+        <Texture parentKey="BorderBottom">
+          <Size y="1"/>
+          <Anchors>
+            <Anchor point="BOTTOMLEFT"/>
+            <Anchor point="BOTTOMRIGHT"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="1"/>
+        </Texture>
+        <Texture parentKey="BorderLeft">
+          <Size x="1"/>
+          <Anchors>
+            <Anchor point="TOPLEFT"/>
+            <Anchor point="BOTTOMLEFT"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="1"/>
+        </Texture>
+      </Layer>
+      <Layer level="ARTWORK">
+        <Texture parentKey="DurationBackground" hidden="true">
+          <Anchors>
+            <Anchor point="BOTTOM" y="1"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="0"/>
+        </Texture>
+        <Texture parentKey="CountBackground" hidden="true">
+          <Anchors>
+            <Anchor point="TOP" y="-1"/>
+          </Anchors>
+          <Color r="0" g="0" b="0" a="0"/>
+        </Texture>
+        <FontString parentKey="Duration" inherits="NKDurationFontStringCenter" justifyH="CENTER" justifyV="BOTTOM">
+          <Anchors>
+            <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/>
+          </Anchors>
+        </FontString>
+        <FontString parentKey="Count" inherits="NKCountFontStringCenter" justifyH="CENTER" justifyV="TOP">
+          <Anchors>
+            <Anchor point="TOP" relativeKey="$parent.CountBackground"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Frames>
+      <!-- The drawEdge attribute was removed? Apparently it's still specified by e.g. TargetDebuffFrameTemplateCooldown
+           (see http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/TargetFrame.xml)? CooldownFrameTemplate is
+           defined in http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/Cooldown.xml -->
+      <Cooldown name="$parentCooldown" parentKey="Cooldown" inherits="CooldownFrameTemplate" reverse="true" alpha="0">
+        <!-- This is done in e.g. TargetDebuffFrameTemplateCooldown. Why though? CooldownFrameTemplate has
+             setAllPoints="true" -->
+        <Anchors>
+          <Anchor point="CENTER" x="0" y="-1"/>
+        </Anchors>
+        <Scripts>
+          <OnShow>
+            self:GetParent().Duration:SetParent(self)
+            self:GetParent().Count:SetParent(self)
+          </OnShow>
+          <OnHide>
+            self:GetParent().Duration:SetParent(self:GetParent())
+            self:GetParent().Count:SetParent(self:GetParent())
+          </OnHide>
+        </Scripts>
+      </Cooldown>
+    </Frames>
+  </Button>
+</Ui>
+
+<!-- vim: set tw=120 sw=2 et: -->

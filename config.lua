@@ -4,12 +4,15 @@ local NinjaKittyAuras = _G.NinjaKittyAuras
 
 auras, groups, comparators, mutators, fakeAuras = {}, {}, {}, {}, {}
 
+-- TODO: Add these: Orb of Power (?), Nature's Swiftness (?), 118358 (Drink), Devotion Aura, Spiritwalker's Aegis
+
 -- Use this one for all buff groups. We never care about these auras.
 auras.irrelevantAuras = {
+  [142247] = true, -- Brawling Champion
   [2479]   = true, -- Honorless Target
   [46705]  = true, -- Honorless Target, TODO: are both of these relevant?
   [72968]  = true, -- Precious's Ribbon
-  [70404]  = true, -- Precious's Ribbon, TODO: remove one of these?
+  [70404]  = true, -- Precious's Ribbon, TODO: are both of thse relevant?
   [145389] = true, -- Temporal Anomaly
 }
 
@@ -21,7 +24,7 @@ auras.coveredPlayerAuras = {
   [50334]  = true, -- Berserk (Bear Form)
   [106951] = true, -- Berserk (Cat Form)
   [26297]  = true, -- Berserking (Troll Racial)
-                   -- TODO: Call of Conquest
+  [126690] = true, -- Call of Conquest
   [768]    = true, -- Cat Form
   [135700] = true, -- Clearcasting
   [1850]   = true, -- Dash
@@ -37,16 +40,16 @@ auras.coveredPlayerAuras = {
   [102547] = true, -- Prowl (while Incarnation: King of the Jungle is active)
   [52610]  = true, -- Savage Roar
   [127538] = true, -- Savage Roar (with Glyph of Savagery)
-  [58984]  = true, -- Shadowmeld, TODO: confirm spell ID.
-  [81022]  = true, -- Stampede, TODO: confirm spell ID.
-  [131538] = true, -- Stampede, TODO: confirm spell ID.
+  [58984]  = true, -- Shadowmeld
+  [81022]  = true, -- Stampede
+  [131538] = true, -- Stampede
   [77761]  = true, -- Stampeding Roar (when used in Bear Form)
   [77764]  = true, -- Stampeding Roar (when used in Cat Form)
   [106898] = true, -- Stampeding Roar (when used in caster form)
-                   -- TODO: Surge of Conquest
+  [126707] = true, -- Surge of Conquest
   [61336]  = true, -- Survival Instincts
   [40120]  = true, -- Swift Flight Form
-                   -- TODO: Synapse Springs
+  [96228]  = true, -- Synapse Springs
   [5217]   = true, -- Tiger's Fury
   [783]    = true, -- Travel Form
 }
@@ -117,7 +120,7 @@ auras.disarms = {
 auras.fullCC = {
   -- *Stuns* --
   [108194] = true, -- Asphyxiate
-  [47481]  = true, -- Gnaw (Ghoul)
+  [91800]  = true, -- Gnaw (Ghoul)
   [91797]  = true, -- Monstrous Blow (Ghoul with Dark Transformation)
   [115001] = true, -- Remorseless Winter
   [102795] = true, -- Bear Hug
@@ -216,7 +219,7 @@ auras.fullCC = {
   [5246]   = true, -- Intimidating Shout
   ---------------
   -- *Horrors* --
-  [111397] = true, -- Blood Horror
+  [137143] = true, -- Blood Horror, 111397 is the ID of the spell and the buff the casting warlock gains.
   [64044]  = true, -- Psychic Horror
   [87204]  = true, -- Sin and Punishment
   [6789]   = true, -- Mortal Coil
@@ -251,7 +254,7 @@ auras.fullCC = {
 }
 
 auras.immunities = {
-  [108978] = true, -- Alter Time
+  --[108978] = true, -- Alter Time
   [110909] = true, -- Alter Time (actual buff)
   [48707]  = true, -- Anti-Magic Shell
   [110570] = true, -- Anti-Magic Shell (Symbiosis)
@@ -259,35 +262,39 @@ auras.immunities = {
   [31224]  = true, -- Cloak of Shadows
   [110788] = true, -- Cloak of Shadows (Symbiosis)
   [110913] = true, -- Dark Bargain
+  [122465] = true, -- Dematerialize
   [19263]  = true, -- Deterrence
   [67801]  = true, -- Deterrence (?)
   [110617] = true, -- Deterrence (?)
   [110618] = true, -- Deterrence (?)
   [114406] = true, -- Deterrence (?)
   [148467] = true, -- Deterrence (?)
-  [122465] = true, -- Dematerialize
+  [115018] = true, -- Desecrated Ground (spell ID is tested)
   [47585]  = true, -- Dispersion
-  [110715] = true, -- Dispersion
+  [110715] = true, -- Dispersion (Symbiosis)
   [642]    = true, -- Divine Shield
   [110700] = true, -- Divine Shield (Symbiosis)
   [6346]   = true, -- Fear Ward
   [115760] = true, -- Glyph of Ice Block
+                   -- Greater Invisibility: TODO.
   [8178]   = true, -- Grounding Totem Effect
   [1022]   = true, -- Hand of Protection
-  [48792]  = true, -- Icebound Fortitude
-  [110575] = true, -- Icebound Fortitude (Symbiosis)
   [45438]  = true, -- Ice Block
   [110696] = true, -- Ice Block (Symbiosis)
+  [48792]  = true, -- Icebound Fortitude
+  [110575] = true, -- Icebound Fortitude (Symbiosis)
   [3411]   = true, -- Intervene
-  [147833] = true, -- Intervene (?)
+  [147833] = true, -- Intervene; TODO: remove incorrect spell ID, confirm spell ID.
   [122292] = true, -- Intervene (Symbiosis)
-  [66]     = true, -- Invisibility
+  [32612]  = true, -- Invisibility; Seems to be correct spell ID. 66 is the ID of the spell.
   [114028] = true, -- Mass Spell Reflection
   [137562] = true, -- Nimble Brew
+                   -- Shroud of Concealment: TODO?
   [112833] = true, -- Spectral Guise
   [114029] = true, -- Safeguard
   [23920]  = true, -- Spell Reflection
   [113002] = true, -- Spell Reflection (Symbiosis)
+                   -- Tremor Totem: TODO? Does this even apply an aura?
   [114896] = true, -- Windwalk Totem
   [115176] = true, -- Zen Meditation
 }
@@ -314,6 +321,18 @@ auras.defensives = {
   [125174] = true, -- Touch of Karma (buff)
 }
 
+-- TODO.
+auras.other = {
+  [23335]  = true, -- Alliance Flag
+  [140876] = true, -- Alliance Mine Cart
+  [23333]  = true, -- Horde Flag
+  [141210] = true, -- Horde Mine Cart
+  [34976]  = true, -- Netherstorm Flag
+  [69369]  = true, -- Predatory Swiftness
+  [114108] = true, -- Soul of the Forest (Restoration Druid Buff)
+  [73685]  = true, -- Unleash Life
+}
+
 -- TODO: Use spell IDs!
 mutators.generalBuffMutators = {
   ["Inner Fire"] = function(aura)
@@ -323,6 +342,12 @@ mutators.generalBuffMutators = {
     aura.shouldConsolidate = 1
   end,
   [161780] = function(aura) -- Gaze of the Black Prince
+    aura.shouldConsolidate = 1
+  end,
+  [128943] = function(aura) -- Cyclonic Inspiration (Shrine of Seven Stars)
+    aura.shouldConsolidate = 1
+  end,
+  [131526] = function(aura) -- Cyclonic Inspiration (Shrine of Two Moons)
     aura.shouldConsolidate = 1
   end,
 }
@@ -387,9 +412,14 @@ end
 
 -- These order functions receive two arguments and must return true if the first argument should come first in the
 -- sorted array. Note that Lua's table.sort is not a stable sort.
-
+------------------------------------------------------------------------------------------------------------------------
 comparators.longerFirst = function(aura1, aura2)
-  if aura1.expires == 0 and aura2.expires == 0 then -- Neither aura expires.
+  if (aura1.expires == 0 and aura2.expires == 0) or aura1.expires == aura2.expires then -- Neither aura expires.
+    if aura1.isExtraStack and not aura2.isExtraStack then
+      return false
+    elseif not aura1.isExtraStack and aura2.isExtraStack then
+      return true
+    end
     return aura1.index < aura2.index -- TODO: sort by name instead of index?
   elseif aura1.expires == 0 then -- Only aura1 is permanent.
     return true
@@ -417,8 +447,8 @@ comparators.buffsFirst = function(aura1, aura2)
   end
   return comparators.longerFirst(aura1, aura2)
 end
+------------------------------------------------------------------------------------------------------------------------
 
--- TODO: display defensives that aren't cast by player?
 _G.table.insert(groups, {
   unit = "player",
   filters = { "HELPFUL", "HARMFUL" },
@@ -469,6 +499,8 @@ _G.table.insert(groups, {
       whitelist = function(aura) -- TODO: what else should be added?
         return aura.spellID == 47788 --[[Guardian Spirit]] or aura.spellID == 97463 --[[Rallying Cry]]
           or aura.spellID == 33206 --[[Pain Suppression]] or aura.spellID == 53480 --[[Roar of Sacrifice]]
+          or aura.name == "Soul Reaper" or aura.name == "Tricks of the Trade" or aura.name == "Dark Simulacrum"
+          or aura.name == "Devouring Plague" or aura.spellID == 6346 --[[Fear Ward]] or aura.name == "Devotion Aura"
       end,
       borderColor = function(aura)
         if aura.filter == "HARMFUL" then
@@ -647,8 +679,7 @@ _G.table.insert(groups, {
       numCols = 4,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "HELPFUL" and auras.immunities[aura.spellID] or
-          aura.filter == "HARMFUL" and (auras.fullCC[aura.spellID] or auras.disarms[aura.spellID])
+        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID]
       end,
       borderColor = function(aura)
         if aura.filter == "HARMFUL" then
@@ -706,7 +737,8 @@ for i = 1, 4 do
         numCols = 4,
         orientation = "HORIZONTAL",
         whitelist = function(aura)
-          return aura.filter == "HARMFUL" and (auras.fullCC[aura.spellID] or auras.disarms[aura.spellID])
+          return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
+            auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
         end,
         borderColor = function(aura)
           if aura.filter == "HARMFUL" then
@@ -764,11 +796,17 @@ for i = 1, 3 do
         numRows = 1,
         numCols = 4,
         orientation = "HORIZONTAL",
+        whitelist = function(aura)
+          return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
+            auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+        end,
+        --[[
         blacklist = function(aura)
           return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellID]) or
             (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
             auras.disarms[aura.spellID])
         end,
+        ]]
         borderColor = function(aura)
           if aura.filter == "HARMFUL" then
             return 192, 0, 0

@@ -7,4 +7,5 @@
 ## Version: 0.1
 
 NinjaKittyAuras.lua
+NinjaKittyAuras.xml
 config.lua
