@@ -36,10 +36,10 @@ auras.coveredPlayerAuras = {
   [16689]  = true, -- Nature's Grasp
   [124974] = true, -- Nature's Vigil
   [69369]  = true, -- Predatory Swiftness
-  [5215]   = true, -- Prowl
-  [102547] = true, -- Prowl (while Incarnation: King of the Jungle is active)
+  --[5215]   = true, -- Prowl
+  --[102547] = true, -- Prowl (while Incarnation: King of the Jungle is active)
   [52610]  = true, -- Savage Roar
-  [127538] = true, -- Savage Roar (with Glyph of Savagery)
+  [174544] = true, -- Savage Roar (from Glyph of Savage Roar)
   [58984]  = true, -- Shadowmeld
   [81022]  = true, -- Stampede
   [131538] = true, -- Stampede
@@ -66,9 +66,9 @@ auras.playerBuffTooltipBlacklist = {
 }
 
 auras.importantOwnDebuffs = {
-  [1822] = true, -- Rake
-  [1079] = true, -- Rip
-  [770]  = true, -- Faerie Fire
+  [155722] = true, -- Rake
+  [1079]   = true, -- Rip
+  [770]    = true, -- Faerie Fire
 }
 
 auras.roots = {
@@ -126,8 +126,7 @@ auras.fullCC = {
   [102795] = true, -- Bear Hug
   [22570]  = true, -- Maim
   [5211]   = true, -- Mighty Bash
-  [9005]   = true, -- Pounce
-  [102546] = true, -- Pounce (Incarnation)
+  [163505] = true, -- Rake
   [110698] = true, -- Hammer of Justice (Symbiosis)
   -- TODO: Are we missing stuff added by Symbiosis?
   [117526] = true, -- Binding Shot
@@ -369,8 +368,8 @@ mutators.debuffMutators = {
 }
 
 auras.targetDebuffBlacklist = {
-  [1822] = true, -- Rake
-  [1079] = true, -- Rip
+  [155722] = true, -- Rake
+  [1079]   = true, -- Rip
 }
 
 do
@@ -387,7 +386,7 @@ do
     name = "Stats missing",
     icon = [[Interface\Icons\Spell_Nature_Regeneration]],
     count = 0,
-    dispelType = "Curse",
+    --dispelType = "Curse",
     duration = 0,
     expires = 0,
     spellID = 1126,
@@ -447,6 +446,20 @@ comparators.buffsFirst = function(aura1, aura2)
   end
   return comparators.longerFirst(aura1, aura2)
 end
+
+local function borderColor(aura)
+  if aura.dispelType then
+    if aura.dispelType == "Curse" then
+      return .75, .25, 1
+    elseif aura.dispelType == "Poison" then
+      return .1, 1, .15
+    end
+  end
+  if aura.filter == "HARMFUL" then
+    return 1, 0, 0
+  end
+  return 0, 0, 0
+end
 ------------------------------------------------------------------------------------------------------------------------
 
 _G.table.insert(groups, {
@@ -468,20 +481,15 @@ _G.table.insert(groups, {
       size = 44,
       xGap = (44 + 2),
       yGap = -(44 + 2),
-      --]]
       numRows = 1,
       numCols = 4,
       orientation = "HORIZONTAL",
+      showCooldownSweep = true,
       whitelist = function(aura)
         return auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or aura.spellID == 122470 --[[Touch of Karma]] or
           auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
     {
       name = "NKAPrimaryPlayerAuras",
@@ -502,12 +510,7 @@ _G.table.insert(groups, {
           or aura.name == "Soul Reaper" or aura.name == "Tricks of the Trade" or aura.name == "Dark Simulacrum"
           or aura.name == "Devouring Plague" or aura.spellID == 6346 --[[Fear Ward]] or aura.name == "Devotion Aura"
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
     { -- TODO: filter auras that are also returned for the vehicle unit?
       name = "NKASecondaryPlayerAuras",
@@ -527,12 +530,7 @@ _G.table.insert(groups, {
           auras.coveredPlayerAuras[aura.spellID] or aura.duration >= 300 or aura.shouldConsolidate
           or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist))
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
     {
       name = "NKALongPlayerBuffs",
@@ -571,12 +569,7 @@ _G.table.insert(groups, {
       numRows = 3,
       numCols = 7,
       orientation = "HORIZONTAL",
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
   },
 })
@@ -600,16 +593,12 @@ _G.table.insert(groups, {
       numRows = 1,
       numCols = 4,
       orientation = "HORIZONTAL",
+      showCooldownSweep = true,
       whitelist = function(aura)
         return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
           auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
     {
       name = "NKAOtherTargetAuras",
@@ -631,12 +620,7 @@ _G.table.insert(groups, {
           (aura.filter == "HELPFUL" and aura.duration >= 300) or aura.shouldConsolidate or
           (auras.targetDebuffBlacklist[aura.spellID] and aura.caster == "player")
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
     {
       name = "NKALongTargetBuffs",
@@ -678,15 +662,17 @@ _G.table.insert(groups, {
       numRows = 1,
       numCols = 4,
       orientation = "HORIZONTAL",
+      showCooldownSweep = true,
+      --[[
       whitelist = function(aura)
         return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID]
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
+      ]]
+      whitelist = function(aura)
+        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
+          auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
       end,
+      borderColor = borderColor,
     },
     {
       name = "NKAOtherFocusAuras",
@@ -704,12 +690,7 @@ _G.table.insert(groups, {
       whitelist = function(aura)
         return aura.filter == "HARMFUL" and auras.importantOwnDebuffs[aura.spellID] and aura.caster == "player"
       end,
-      borderColor = function(aura)
-        if aura.filter == "HARMFUL" then
-          return 192, 0, 0
-        end
-        return 0, 0, 0
-      end,
+      borderColor = borderColor,
     },
   },
 })
@@ -736,16 +717,12 @@ for i = 1, 4 do
         numRows = 1,
         numCols = 4,
         orientation = "HORIZONTAL",
+        showCooldownSweep = true,
         whitelist = function(aura)
           return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
             auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
         end,
-        borderColor = function(aura)
-          if aura.filter == "HARMFUL" then
-            return 192, 0, 0
-          end
-          return 0, 0, 0
-        end,
+        borderColor = borderColor,
       },
       {
         name = "NKAOtherParty" .. i .. "Auras",
@@ -765,12 +742,7 @@ for i = 1, 4 do
             aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= "Curse" and
             aura.dispelType ~= "Poison")
         end,
-        borderColor = function(aura)
-          if aura.filter == "HARMFUL" then
-            return 192, 0, 0
-          end
-          return 0, 0, 0
-        end,
+        borderColor = borderColor,
       },
     },
   })
@@ -796,6 +768,7 @@ for i = 1, 3 do
         numRows = 1,
         numCols = 4,
         orientation = "HORIZONTAL",
+        showCooldownSweep = true,
         whitelist = function(aura)
           return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
             auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
@@ -807,12 +780,7 @@ for i = 1, 3 do
             auras.disarms[aura.spellID])
         end,
         ]]
-        borderColor = function(aura)
-          if aura.filter == "HARMFUL" then
-            return 192, 0, 0
-          end
-          return 0, 0, 0
-        end,
+        borderColor = borderColor,
       },
     },
   })

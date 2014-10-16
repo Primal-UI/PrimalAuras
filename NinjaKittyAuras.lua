@@ -26,17 +26,6 @@ function blacklistByTooltip(unit, index, filter, blacklist)
   return false
 end
 
---[=[
-local backdrop = {
-  bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
-  edgeFile = [[Interface\ChatFrame\ChatFrameBackground]],
-  tile = false,
-  --tileSize = 32,
-  edgeSize = 1,
-  insets = { left = 0, right = 0, top = 0, bottom = 0, },
-}
-]=]
-
 local function setBorderColor(auraFrame, red, green, blue, alpha)
   alpha = alpha or 1
   auraFrame.BorderTop:SetTexture(red, green, blue, alpha)
@@ -47,18 +36,24 @@ end
 
 local function NKAuraButton_OnUpdate(self, elapsed)
   local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
-  if seconds > 99 then
-    self.DurationBackground:Hide()
+  if seconds < 0 then
+    self:SetScript("OnUpdate", nil)
+    return
+  elseif seconds > 99 then
+    --self.DurationBackground:Hide()
     self.Duration:Hide()
     return
+  else
+    self.Duration:SetText(_G.tostring(seconds))
+    --[[
+    local width = self.Duration:GetStringWidth()
+    if width % 2 == 1 then
+      width = width + 1
+    end
+    local height = self.Duration:GetStringHeight()
+    self.DurationBackground:SetSize(width, height)
+    ]]
   end
-  self.Duration:SetText(_G.tostring(seconds))
-  local width = self.Duration:GetStringWidth()
-  if width % 2 == 1 then
-    width = width + 1
-  end
-  local height = self.Duration:GetStringHeight()
-  self.DurationBackground:SetSize(width, height)
 end
 
 local function initDisplay(display, group)
@@ -124,6 +119,33 @@ local function initDisplay(display, group)
       frame:SetBackdropColor(0, 0, 0, 0)
     end
     ]]
+
+    --frame.Cooldown:SetDrawBling(false)
+    --frame.Cooldown:SetDrawEdge(false)
+    --frame.Cooldown:SetDrawSwipe(true)
+    --frame.Cooldown:SetReverse(true)
+    --[[
+    _G.hooksecurefunc(frame.Cooldown, "Hide", function(self)
+      self:Show()
+    end)
+    ]]
+
+    if display.showCooldownSweep then
+      --[[
+      frame:SetScript("OnShow", function(self)
+        if not (frame.Cooldown:IsShown() and frame.Cooldown:GetCooldownDuration()) then
+          _G.print(frame.start, frame.duration)
+          frame.Cooldown:SetCooldown(frame.start, frame.duration)
+        end
+      end)
+      ]]
+      frame:SetScript("OnHide", function(self)
+        local start, duration = frame.start, frame.duration
+        if start and duration and start ~= 0 and duration ~= 0 and _G.GetTime() <= start + duration then
+          self.Cooldown:SetCooldown(start, duration)
+        end
+      end)
+    end
 
     frame:SetScript("OnEnter", function(self, motion)
       if group.unit and self.auraIndex and self.auraFilter then
@@ -328,7 +350,7 @@ local function updateDisplay(display, group)
       end
 
       if aura.count and aura.count > 1 then
-        frame.CountBackground:Show()
+        --frame.CountBackground:Show()
         frame.Count:Show()
         frame.Count:SetText(aura.count)
         local width = frame.Count:GetStringWidth()
@@ -336,9 +358,9 @@ local function updateDisplay(display, group)
           width = width + 1
         end
         local height = frame.Count:GetStringHeight()
-        frame.CountBackground:SetSize(width, height)
+        --frame.CountBackground:SetSize(width, height)
       else
-        frame.CountBackground:Hide()
+        --frame.CountBackground:Hide()
         frame.Count:Hide()
       end
 
@@ -347,9 +369,11 @@ local function updateDisplay(display, group)
         setBorderColor(frame, display.borderColor(aura))
       end
 
+      frame.duration, frame.expires, frame.start = aura.duration, aura.expires, 0
+
       if aura.duration == 0 and aura.expires == 0 then
         frame.Cooldown:Hide()
-        frame.DurationBackground:Hide()
+        --frame.DurationBackground:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
       elseif aura.duration == 0 then -- We only got the time at which the aura will expire.
@@ -366,7 +390,7 @@ local function updateDisplay(display, group)
         local start = aura.expires - aura.duration
 
         if start < 0 then
-          start = 0.01 -- OmniCC doesn't work with cooldowns starting at 0.
+          start = 0.000001 -- OmniCC doesn't work with cooldowns starting at 0.
           duration = aura.expires - start
         elseif start > _G.GetTime() then -- The aura wasn't applied yet?! Does this really happen?
           start = _G.GetTime()
@@ -374,14 +398,17 @@ local function updateDisplay(display, group)
         else
           duration = aura.duration
         end
-        frame.DurationBackground:Show()
+        --frame.DurationBackground:Show()
         frame.Duration:Show()
-        frame.expires = aura.expires
+        frame.start, frame.duration, frame.expires = start, duration, aura.expires
         frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
-        --_G.CooldownFrame_SetTimer(frame.Cooldown, start, duration, true)
+        if display.showCooldownSweep then
+          --_G.CooldownFrame_SetTimer(frame.Cooldown, start, duration, true)
+          frame.Cooldown:SetCooldown(start, duration)
+        end
       else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.
         frame.Cooldown:Hide()
-        frame.DurationBackground:Hide()
+        --frame.DurationBackground:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
       end

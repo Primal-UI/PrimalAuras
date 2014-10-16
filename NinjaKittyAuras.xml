@@ -79,6 +79,7 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
         </Texture>
       </Layer>
       <Layer level="ARTWORK">
+        <!--
         <Texture parentKey="DurationBackground" hidden="true">
           <Anchors>
             <Anchor point="BOTTOM" y="1"/>
@@ -91,14 +92,17 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
           </Anchors>
           <Color r="0" g="0" b="0" a="0"/>
         </Texture>
+        -->
         <FontString parentKey="Duration" inherits="NKDurationFontStringCenter" justifyH="CENTER" justifyV="BOTTOM">
           <Anchors>
-            <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/>
+            <!-- <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/> -->
+            <Anchor point="BOTTOM" y="1"/>
           </Anchors>
         </FontString>
         <FontString parentKey="Count" inherits="NKCountFontStringCenter" justifyH="CENTER" justifyV="TOP">
           <Anchors>
-            <Anchor point="TOP" relativeKey="$parent.CountBackground"/>
+            <!-- <Anchor point="TOP" relativeKey="$parent.CountBackground"/> -->
+            <Anchor point="TOP" y="-1"/>
           </Anchors>
         </FontString>
       </Layer>
@@ -107,7 +111,8 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
       <!-- The drawEdge attribute was removed? Apparently it's still specified by e.g. TargetDebuffFrameTemplateCooldown
            (see http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/TargetFrame.xml)? CooldownFrameTemplate is
            defined in http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/Cooldown.xml -->
-      <Cooldown name="$parentCooldown" parentKey="Cooldown" inherits="CooldownFrameTemplate" reverse="true" alpha="0">
+      <Cooldown name="$parentCooldown" parentKey="Cooldown" inherits="CooldownFrameTemplate" drawBling="false"
+      drawEdge="false" reverse="true">
         <!-- This is done in e.g. TargetDebuffFrameTemplateCooldown. Why though? CooldownFrameTemplate has
              setAllPoints="true" -->
         <Anchors>
@@ -119,8 +124,17 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
             self:GetParent().Count:SetParent(self)
           </OnShow>
           <OnHide>
-            self:GetParent().Duration:SetParent(self:GetParent())
-            self:GetParent().Count:SetParent(self:GetParent())
+            <!-- As of patch 6.0.2, cooldowns are now hidden automatically upon expiration. This is not what we want
+                 because it can cause auras to briefly "light up" before falling off and being hidden. We also continue
+                 to show auras after they should have expired when we don't see the unit anymore (and don't know for
+                 sure if it's gone). In that case we want it to be darkened to indicate it most likely fell off already.
+            -->
+            if self:GetParent().duration and self:GetParent().duration ~= 0 then
+              self:Show()
+            else
+              self:GetParent().Duration:SetParent(self:GetParent())
+              self:GetParent().Count:SetParent(self:GetParent())
+            end
           </OnHide>
         </Scripts>
       </Cooldown>
