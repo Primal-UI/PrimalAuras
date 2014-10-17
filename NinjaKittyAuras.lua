@@ -40,19 +40,10 @@ local function NKAuraButton_OnUpdate(self, elapsed)
     self:SetScript("OnUpdate", nil)
     return
   elseif seconds > 99 then
-    --self.DurationBackground:Hide()
     self.Duration:Hide()
     return
   else
     self.Duration:SetText(_G.tostring(seconds))
-    --[[
-    local width = self.Duration:GetStringWidth()
-    if width % 2 == 1 then
-      width = width + 1
-    end
-    local height = self.Duration:GetStringHeight()
-    self.DurationBackground:SetSize(width, height)
-    ]]
   end
 end
 
@@ -350,7 +341,6 @@ local function updateDisplay(display, group)
       end
 
       if aura.count and aura.count > 1 then
-        --frame.CountBackground:Show()
         frame.Count:Show()
         frame.Count:SetText(aura.count)
         local width = frame.Count:GetStringWidth()
@@ -358,9 +348,7 @@ local function updateDisplay(display, group)
           width = width + 1
         end
         local height = frame.Count:GetStringHeight()
-        --frame.CountBackground:SetSize(width, height)
       else
-        --frame.CountBackground:Hide()
         frame.Count:Hide()
       end
 
@@ -373,7 +361,6 @@ local function updateDisplay(display, group)
 
       if aura.duration == 0 and aura.expires == 0 then
         frame.Cooldown:Hide()
-        --frame.DurationBackground:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
       elseif aura.duration == 0 then -- We only got the time at which the aura will expire.
@@ -398,7 +385,6 @@ local function updateDisplay(display, group)
         else
           duration = aura.duration
         end
-        --frame.DurationBackground:Show()
         frame.Duration:Show()
         frame.start, frame.duration, frame.expires = start, duration, aura.expires
         frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
@@ -408,7 +394,6 @@ local function updateDisplay(display, group)
         end
       else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.
         frame.Cooldown:Hide()
-        --frame.DurationBackground:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
       end
