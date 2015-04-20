@@ -1,10 +1,11 @@
-setfenv(1, NinjaKittyAuras)
+local addOnName, addOn = ...
 
-local NinjaKittyAuras = _G.NinjaKittyAuras
+setfenv(1, addOn)
 
 auras, groups, comparators, mutators, fakeAuras = {}, {}, {}, {}, {}
 
--- TODO: Add these: Orb of Power (?), Nature's Swiftness (?), 118358 (Drink), Devotion Aura, Spiritwalker's Aegis
+-- TODO: Add these auras: Orb of Power (?), Nature's Swiftness (?), 118358 (Drink). Only show Smoke Bomb if it's casted
+-- by a hostile Rogue? Show Faerie Fire and Faerie Swarm as CC?
 
 -- Use this one for all buff groups. We never care about these auras.
 auras.irrelevantAuras = {
@@ -26,14 +27,11 @@ auras.coveredPlayerAuras = {
   [26297]  = true, -- Berserking (Troll Racial)
   [126690] = true, -- Call of Conquest
   [768]    = true, -- Cat Form
+  [171745] = true, -- Claws of Shirvallah
   [135700] = true, -- Clearcasting
   [1850]   = true, -- Dash
-  [145152] = true, -- Dream of Cenarius
-  [63058]  = true, -- Glyph of Amberskin Protection
   [108292] = true, -- Heart of the Wild (Feral)
   [102543] = true, -- Incarnation: King of the Jungle
-  [106922] = true, -- Might of Ursoc
-  [16689]  = true, -- Nature's Grasp
   [124974] = true, -- Nature's Vigil
   [69369]  = true, -- Predatory Swiftness
   --[5215]   = true, -- Prowl
@@ -46,7 +44,7 @@ auras.coveredPlayerAuras = {
   [77761]  = true, -- Stampeding Roar (when used in Bear Form)
   [77764]  = true, -- Stampeding Roar (when used in Cat Form)
   [106898] = true, -- Stampeding Roar (when used in caster form)
-  [126707] = true, -- Surge of Conquest
+  [182068] = true, -- Surge of Conquest.
   [61336]  = true, -- Survival Instincts
   [40120]  = true, -- Swift Flight Form
   [96228]  = true, -- Synapse Springs
@@ -69,15 +67,18 @@ auras.importantOwnDebuffs = {
   [155722] = true, -- Rake
   [1079]   = true, -- Rip
   [770]    = true, -- Faerie Fire
+  [102355] = true, -- Faerie Swarm
 }
+
+-- TODO: Shambling Rush (91807): wowhead.com/spell=91802, wowhead.com/spell=91807
 
 auras.roots = {
   [96294]  = true, -- Chains of Ice
+  [53148]  = true, -- Charge (Tenacity pet). TODO: confirm spell ID.
   [339]    = true, -- Entangling Roots
-  [19975]  = true, -- Entangling Roots (Nature's Grasp). Nature's Grasp is 16689.
+  [170855] = true, -- Entangling Roots (Nature's Grasp). Nature's Grasp is 170856. TODO: confirm.
   [113770] = true, -- Entangling Roots (Force of Nature). This spell ID is correct for Feral; TODO: also for Balance?
   [102359] = true, -- Mass Entanglement
-  [53148]  = true, -- Charge (Tenacity pet). TODO: confirm spell ID.
   [136634] = true, -- Narrow Escape. TODO: confirm spell ID.
   [50245]  = true, -- Pin (Crab pet). TODO: confirm spell ID.
   [90327]  = true, -- Lock Jaw (Dog pet). TODO: confirm spell ID.
@@ -87,24 +88,27 @@ auras.roots = {
   [102051] = true, -- Frostjaw (Silence and Root). TODO: confirm spell ID.
   [122]    = true, -- Frost Nova. TODO: confirm spell ID.
   [116706] = true, -- Disable. TODO: confirm spell ID.
-  [113275] = true, -- Entangling Roots (Mistweaver Monk Symbiosis). TODO: confirm spell ID.
   [87194]  = true, -- Glyph of Mind Blast. TODO: confirm spell ID.
   [114404] = true, -- Void Tendril's Grasp. TODO: confirm spell ID.
   [115197] = true, -- Partial Paralysis. TODO: confirm spell ID.
   [63685]  = true, -- Freeze (Frost Shock with Frozen Power talent). TODO: confirm spell ID.
   [107566] = true, -- Staggering Shout. TODO: confirm spell ID.
   [105771] = true, -- Warbringer (Charge). TODO: confirm spell ID.
+  [91807]  = true, -- Shambling Rush (Ghoul with Dark Transformation; Unholy Death Knight). Spell ID confirmed.
 }
 
+-- TODO: is there still a separate DR categorie for "Short Roots"?
 auras.shortRoots = {
   [45334]  = true, -- Immobilized (Bear Form Wild Charge)
-  [64803]  = true, -- Entrapment. TODO: confirm spell ID.
+  [64803]  = true, -- Entrapment. TODO: confirm spell ID. I think this isn't the correct ID.
+  [135373] = true, -- Entrapment. TODO: confirm spell ID. I think this is the correct ID.
   [111340] = true, -- Ice Ward. TODO: confirm spell ID.
   [123407] = true, -- Spinning Fire Blossom. TODO: confirm spell ID.
   [64695]  = true, -- Earthgrab. TODO: confirm spell ID.
 }
 
 auras.disarms = {
+  --[[
   [50541]  = true, -- Clench (Scorpid pet)
   [676]    = true, -- Disarm
   [137461] = true, -- Disarmed (Ring of Peace)
@@ -113,10 +117,12 @@ auras.disarms = {
   [126458] = true, -- Grapple Weapon
   [91644]  = true, -- Snatch (Bird of Prey pet)
   [64058]  = true, -- Psychic Horror
+  ]]
 }
 
 -- Full Crowd Control and Silences. Based on http://us.battle.net/wow/en/forum/topic/10195910192,
--- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius.
+-- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius. TODO: sort these into
+-- the actual remaining categories.
 auras.fullCC = {
   -- *Stuns* --
   [108194] = true, -- Asphyxiate
@@ -127,26 +133,15 @@ auras.fullCC = {
   [22570]  = true, -- Maim
   [5211]   = true, -- Mighty Bash
   [163505] = true, -- Rake
-  [110698] = true, -- Hammer of Justice (Symbiosis)
-  -- TODO: Are we missing stuff added by Symbiosis?
   [117526] = true, -- Binding Shot
   [24394]  = true, -- Intimidation
-  -- TODO: Are all these pet abilities actually stuns?
-  [90337]  = true, -- Bad Manner (Monkey pet)
-  [126246] = true, -- Lullaby (Crane pet)
-  [126423] = true, -- Petrifying Gaze (Basilisk pet)
-  [126355] = true, -- Paralyzing Quill (Porcupine Pet)
-  [56626]  = true, -- Sting (Wasp pet)
-  [50519]  = true, -- Sonic Blast (Bat pet)
-  [96201]  = true, -- Web Wrap (Shale Spider pet)
-  [118271] = true, -- Combustion Impact
+  [157997] = true, -- Ice Nova -- TODO: confirm spell ID.
+  --[118271] = true, -- Combustion Impact
   [44572]  = true, -- Deep Freeze
-  [127361] = true, -- Bear Hug (Windwalker Monk Symbiosis)
-  [119392] = true, -- Charging Ox Wave
+  [123687] = true, -- Charging Ox Wave. Confirmed ID.
   [122242] = true, -- Clash
   [120086] = true, -- Fists of Fury
   [119381] = true, -- Leg Sweep
-  [115752] = true, -- Blinding Light (Glyphed)
   [853]    = true, -- Hammer of Justice
   [119072] = true, -- Holy Wrath
   [105593] = true, -- Fist of Justice
@@ -170,17 +165,23 @@ auras.fullCC = {
   [118895] = true, -- Dragon Roar -- TODO: is this the correct ID?
   ------------------
   -- *Mesmerizes* --
-  [2637]  = true, -- Hibernate
   [55041]  = true, -- Freezing Trap Effect -- TODO: Which one do we need?
   [1499]   = true, -- Freezing Trap Effect
   [3355]   = true, -- Freezing Trap (Trap Launcher)
   [60192]  = true, -- Freezing Trap (Trap Launcher)
   [19386]  = true, -- Wyvern Sting
   [118]    = true, -- Polymorph
-  [61305]  = true, -- Polymorph (Black Cat)
-  [28272]  = true, -- Polymorph (Pig)
-  [61025]  = true, -- Polymorph (Serpent)
   [28271]  = true, -- Polymorph (Turtle)
+  [28272]  = true, -- Polymorph (Pig)
+  [61305]  = true, -- Polymorph (Black Cat)
+  [61721]  = true, -- Polymorph (Rabbit)
+  [61780]  = true, -- Polymorph (Turkey)
+  [126819] = true, -- Polymorph (Porcupine)
+  [161353] = true, -- Polymorph (Polar Bear Cub)
+  [161354] = true, -- Polymorph (Monkey)
+  [161355] = true, -- Polymorph (Penguin)
+  [161372] = true, -- Polymorph (Peacock)
+  [61025]  = true, -- Polymorph (Serpent)
   [82691]  = true, -- Ring of Frost
   [115078] = true, -- Paralysis
   [20066]  = true, -- Repentance
@@ -193,21 +194,18 @@ auras.fullCC = {
   [107079] = true, -- Quaking Palm (Pandaren Racial)
   --------------------------
   -- *Mesmerizes (Short)* --
-  [99]     = true, -- Disorienting Roar
+  [99]     = true, -- Incapacitating Roar
   [19503]  = true, -- Scatter Shot
   [31661]  = true, -- Dragon's Breath
   [123393] = true, -- Breath of Fire (Glyphed)
   [88625]  = true, -- Holy Word: Chastise
   -------------
-  -- *Fears* --
-  [113004] = true, -- Intimidating Roar (Druid Symbiosis)
-  [113056] = true, -- Intimidating Roar (Druid Symbiosis)
-  [1513]   = true, -- Scare Beast
-  [105421] = true, -- Blinding Light
+  -- *Disorients* --
+  [105421] = true, -- Blinding Light; TODO: confirm spell ID.
+  [33786]  = true, -- Cyclone
   [10326]  = true, -- Turn Evil
-  [145067] = true, -- Turn Evil (?)
+  [145067] = true, -- Turn Evil (Glyphed?)
   [8122]   = true, -- Psychic Scream
-  [113792] = true, -- Psychic Terror (Psyfiend)
   [2094]   = true, -- Blind
   [5782]   = true, -- Fear
   [118699] = true, -- Fear
@@ -227,6 +225,7 @@ auras.fullCC = {
   [47476]   = true, -- Strangulate
   [114237]  = true, -- Glyph of Fae Silence
   [34490]   = true, -- Silencing Shot
+  [78675]   = true, -- Solar Beam
   [102051]  = true, -- Frostjaw (Silence and Root)
   [55021]   = true, -- Silenced - Improved Counterspell
   [137460]  = true, -- Silenced (Ring of Peace)
@@ -243,23 +242,18 @@ auras.fullCC = {
   [80483]   = true, -- Arcane Torrent (Blood Elf Racial, Hunter)
   [129597]  = true, -- Arcane Torrent (Blood Elf Racial, Monk)
   [155145]  = true, -- Arcane Torrent (Blood Elf Racial, Paladin)
-  ---------------
-  -- *Cyclone* --
-  [33786]  = true, -- Cyclone
-  [113506] = true, -- Cyclone (Symbiosis)
   --------------
   -- *Charms* --
   [605] = true, -- Dominate Mind
 }
 
 auras.immunities = {
-  --[108978] = true, -- Alter Time
   [110909] = true, -- Alter Time (actual buff)
   [48707]  = true, -- Anti-Magic Shell
-  [110570] = true, -- Anti-Magic Shell (Symbiosis)
+  [172106] = true, -- Aspect of the Fox
   [46924]  = true, -- Bladestorm
+  [170847] = true, -- Celestial Protection. TODO: confirm spell ID. Is this in the game?
   [31224]  = true, -- Cloak of Shadows
-  [110788] = true, -- Cloak of Shadows (Symbiosis)
   [110913] = true, -- Dark Bargain
   [122465] = true, -- Dematerialize
   [19263]  = true, -- Deterrence
@@ -269,53 +263,60 @@ auras.immunities = {
   [114406] = true, -- Deterrence (?)
   [148467] = true, -- Deterrence (?)
   [115018] = true, -- Desecrated Ground (spell ID is tested)
+  [152150] = true, -- Death from Above. Spell ID confirmed.
   [47585]  = true, -- Dispersion
-  [110715] = true, -- Dispersion (Symbiosis)
   [642]    = true, -- Divine Shield
-  [110700] = true, -- Divine Shield (Symbiosis)
+  [31821]  = true, -- Devotion Aura. TODO: confirm spell ID.
   [6346]   = true, -- Fear Ward
+  [159438] = true, -- Glyph of Enchanted Bark
   [115760] = true, -- Glyph of Ice Block
                    -- Greater Invisibility: TODO.
   [8178]   = true, -- Grounding Totem Effect
+  [1044]   = true, -- Hand of Freedom. TODO: confirm spell ID.
   [1022]   = true, -- Hand of Protection
+  [152175] = true, -- Hurricane Strike
   [45438]  = true, -- Ice Block
-  [110696] = true, -- Ice Block (Symbiosis)
   [48792]  = true, -- Icebound Fortitude
-  [110575] = true, -- Icebound Fortitude (Symbiosis)
   [3411]   = true, -- Intervene
   [147833] = true, -- Intervene; TODO: remove incorrect spell ID, confirm spell ID.
-  [122292] = true, -- Intervene (Symbiosis)
   [32612]  = true, -- Invisibility; Seems to be correct spell ID. 66 is the ID of the spell.
+  [51690]  = true, -- Killing Spree; TODO: confirm spell ID.
   [114028] = true, -- Mass Spell Reflection
+  [54216]  = true, -- Master's Call; TODO: remove one of these?
+  [62305]  = true, -- Master's Call; TODO: remove one of these?
   [137562] = true, -- Nimble Brew
+  [159630] = true, -- Shadow Magic. Spell ID confirmed.
                    -- Shroud of Concealment: TODO?
-  [112833] = true, -- Spectral Guise
   [114029] = true, -- Safeguard
+  [112833] = true, -- Spectral Guise
   [23920]  = true, -- Spell Reflection
-  [113002] = true, -- Spell Reflection (Symbiosis)
-                   -- Tremor Totem: TODO? Does this even apply an aura?
+  [131558] = true, -- Spiritwalker's Aegis. TODO: confirm spell ID.
+  [79206]  = true, -- Spiritwalker's Grace. TODO: confirm spell ID.
+                   -- TODO: Tremor Totem. Does this even apply an aura?
   [114896] = true, -- Windwalk Totem
+  [124488] = true, -- Zen Focus. TODO: confirm spell ID.
   [115176] = true, -- Zen Meditation
 }
 
--- TODO: Might of Ursoc? Last Stand? Combat Insight?
 auras.defensives = {
+  [31842]  = true, -- Avenging Wrath. TODO: confirm spell ID.
   [108271] = true, -- Astral Shift
   [22812]  = true, -- Barkskin
+  [74002]  = true, -- Combat Insight
   [74001]  = true, -- Combat Readiness
   [118038] = true, -- Die by the Sword
   [5277]   = true, -- Evasion
   [1966]   = true, -- Feint
-  [113613] = true, -- Growl (Rogue Symbiosis)
   [47788]  = true, -- Guardian Spirit
+  [6940]   = true, -- Hand of Sacrifice. TODO: confirm spell ID.
   [102342] = true, -- Ironbark
+  [12975]  = true, -- Last Stand
   [116849] = true, -- Life Cocoon
   [33206]  = true, -- Pain Suppression
   [97463]  = true, -- Rallying Cry. Spell ID confirmed. 97462 is the actual spell.
   [53480]  = true, -- Roar of Sacrifice
   [30823]  = true, -- Shamanistic Rage
   [61336]  = true, -- Survival Instincts
-  [113306] = true, -- Survival Instincts (Brewmaster Monk Symbiosis)
   [871]    = true, -- Shield Wall
   [125174] = true, -- Touch of Karma (buff)
 }
@@ -327,6 +328,8 @@ auras.other = {
   [23333]  = true, -- Horde Flag
   [141210] = true, -- Horde Mine Cart
   [34976]  = true, -- Netherstorm Flag
+  [84746]  = true, -- Moderate Insight
+  [84747]  = true, -- Deep Insight
   [69369]  = true, -- Predatory Swiftness
   [114108] = true, -- Soul of the Forest (Restoration Druid Buff)
   [73685]  = true, -- Unleash Life
@@ -389,15 +392,17 @@ do
     --dispelType = "Curse",
     duration = 0,
     expires = 0,
-    spellID = 1126,
+    spellId = 1126,
     value2 = 5,
     present = function(unit)
       if not _G.UnitIsConnected(unit) or _G.UnitIsDeadOrGhost(unit) or not _G.UnitInPhase(unit) then
         return false
       end
+      -- TODO: this is not the correct range and this isn't updated when it should be.
+      --[[
       local inRange = _G.IsSpellInRange("Mark of the Wild", unit)
-      if not inRange or inRange == 0 then return false end -- TODO: this is not the correct range and this isn't updated
-                                                           -- when it should be.
+      if not inRange or inRange == 0 then return false end
+      ]]
       for k, _ in _G.pairs(increasedStats) do
         if _G.UnitAura(unit, k, nil , "HELPFUL") then
           return false
@@ -486,8 +491,9 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       showCooldownSweep = true,
       whitelist = function(aura)
-        return auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or aura.spellID == 122470 --[[Touch of Karma]] or
-          auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+        return auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or auras.roots[aura.spellId] or
+          auras.shortRoots[aura.spellId] or aura.spellId == 122470 --[[Touch of Karma]] or
+          aura.spellId == 1022 --[[Hand of Protection]] or aura.spellId == 88611 --[[Smoke Bomb]]
       end,
       borderColor = borderColor,
     },
@@ -505,10 +511,10 @@ _G.table.insert(groups, {
       numCols = 4,
       orientation = "HORIZONTAL",
       whitelist = function(aura) -- TODO: what else should be added?
-        return aura.spellID == 47788 --[[Guardian Spirit]] or aura.spellID == 97463 --[[Rallying Cry]]
-          or aura.spellID == 33206 --[[Pain Suppression]] or aura.spellID == 53480 --[[Roar of Sacrifice]]
-          or aura.name == "Soul Reaper" or aura.name == "Tricks of the Trade" or aura.name == "Dark Simulacrum"
-          or aura.name == "Devouring Plague" or aura.spellID == 6346 --[[Fear Ward]] or aura.name == "Devotion Aura"
+        return auras.immunities[aura.spellId] or auras.defensives[aura.spellId] or aura.name == "Soul Reaper"
+          or aura.name == "Dark Simulacrum" or aura.name == "Devouring Plague" or aura.spellId == 6346 --[[Fear Ward]]
+          --or aura.name == "Devotion Aura"
+          --or aura.name == "Tricks of the Trade" or aura.spellId == 172106 --[[Aspect of the Fox]]
       end,
       borderColor = borderColor,
     },
@@ -526,8 +532,8 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return aura.filter == "HELPFUL" and (auras.irrelevantAuras[aura.spellID] or
-          auras.coveredPlayerAuras[aura.spellID] or aura.duration >= 300 or aura.shouldConsolidate
+        return aura.filter == "HELPFUL" and (auras.irrelevantAuras[aura.spellId] or
+          auras.coveredPlayerAuras[aura.spellId] or aura.duration >= 300 or aura.shouldConsolidate
           or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist))
       end,
       borderColor = borderColor,
@@ -545,7 +551,7 @@ _G.table.insert(groups, {
       numCols = 14,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.irrelevantAuras[aura.spellID] or auras.coveredPlayerAuras[aura.spellID]
+        return auras.irrelevantAuras[aura.spellId] or auras.coveredPlayerAuras[aura.spellId]
       end,
     }
   },
@@ -595,8 +601,8 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       showCooldownSweep = true,
       whitelist = function(aura)
-        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-          auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+          auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
       end,
       borderColor = borderColor,
     },
@@ -615,10 +621,10 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-          auras.defensives[aura.spellID] or auras.irrelevantAuras[aura.spellID] or
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+          auras.defensives[aura.spellId] or auras.irrelevantAuras[aura.spellId] or
           (aura.filter == "HELPFUL" and aura.duration >= 300) or aura.shouldConsolidate or
-          (auras.targetDebuffBlacklist[aura.spellID] and aura.caster == "player")
+          (auras.targetDebuffBlacklist[aura.spellId] and aura.caster == "player")
       end,
       borderColor = borderColor,
     },
@@ -637,7 +643,7 @@ _G.table.insert(groups, {
       numCols = 16,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.irrelevantAuras[aura.spellID] or (aura.duration < 300 and not aura.shouldConsolidate)
+        return auras.irrelevantAuras[aura.spellId] or (aura.duration < 300 and not aura.shouldConsolidate)
       end,
     },
   },
@@ -665,15 +671,16 @@ _G.table.insert(groups, {
       showCooldownSweep = true,
       --[[
       whitelist = function(aura)
-        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID]
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId]
       end,
       ]]
       whitelist = function(aura)
-        return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-          auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+          auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
       end,
       borderColor = borderColor,
     },
+    --[[
     {
       name = "NKAOtherFocusAuras",
       parent = "NKFocusFrame",
@@ -688,10 +695,11 @@ _G.table.insert(groups, {
       numCols = 4,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "HARMFUL" and auras.importantOwnDebuffs[aura.spellID] and aura.caster == "player"
+        return aura.filter == "HARMFUL" and auras.importantOwnDebuffs[aura.spellId] and aura.caster == "player"
       end,
       borderColor = borderColor,
     },
+    ]]
   },
 })
 
@@ -719,18 +727,26 @@ for i = 1, 4 do
         orientation = "HORIZONTAL",
         showCooldownSweep = true,
         whitelist = function(aura)
-          return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-            auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+            auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
         end,
         borderColor = borderColor,
       },
       {
         name = "NKAOtherParty" .. i .. "Auras",
         parent = "NKParty" .. i .. "Frame",
+        ----[[
         anchorPoint = "BOTTOMRIGHT",
         relativePoint = "TOPRIGHT",
         xOffset = 0,
         yOffset = 2,
+        --]]
+        --[[
+        anchorPoint = "TOPRIGHT",
+        relativePoint = "BOTTOMRIGHT",
+        xOffset = 0,
+        yOffset = -2,
+        --]]
         size = 28,
         xGap = -(28 + 2),
         yGap = -(28 + 2),
@@ -740,7 +756,7 @@ for i = 1, 4 do
         blacklist = function(aura)
           return (aura.filter == "HELPFUL" and (aura.duration >= 300 or aura.shouldConsolidate or
             aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= "Curse" and
-            aura.dispelType ~= "Poison")
+            aura.dispelType ~= "Poison" and aura.name ~= "Stats missing")
         end,
         borderColor = borderColor,
       },
@@ -770,14 +786,14 @@ for i = 1, 3 do
         orientation = "HORIZONTAL",
         showCooldownSweep = true,
         whitelist = function(aura)
-          return auras.immunities[aura.spellID] or auras.fullCC[aura.spellID] or auras.disarms[aura.spellID] or
-            auras.defensives[aura.spellID] or auras.roots[aura.spellID] or auras.shortRoots[aura.spellID]
+          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+            auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
         end,
         --[[
         blacklist = function(aura)
-          return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellID]) or
-            (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellID] and not
-            auras.disarms[aura.spellID])
+          return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellId]) or
+            (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellId] and not
+            auras.disarms[aura.spellId])
         end,
         ]]
         borderColor = borderColor,

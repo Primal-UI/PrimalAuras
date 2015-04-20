@@ -1,10 +1,16 @@
--- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active).
+local addOnName, addOn = ...
 
-NinjaKittyAuras = { _G = _G }
-setfenv(1, NinjaKittyAuras)
+addOn._G = _G
+setfenv(1, addOn)
+
+-- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active).
+-- Implement functionality to drack DRs.
+
+local DRData = _G.LibStub:GetLibrary("DRData-1.0")
+DRData.resetTimes.default = 18.4 -- twitter.com/holinka/status/572482319849660416
 
 local keys = { "name", "rank", "icon", "count", "dispelType", "duration", "expires", "caster", "isStealable",
-  "shouldConsolidate", "spellID", "canApplyAura", "isBossDebuff", "value1", "value2", "value3", "filter", "index" }
+  "shouldConsolidate", "spellId", "canApplyAura", "isBossDebuff", "value1", "value2", "value3", "filter", "index" }
 
 local maxDisplayedStacks = 5
 
@@ -37,10 +43,11 @@ end
 local function NKAuraButton_OnUpdate(self, elapsed)
   local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
   if seconds < 0 then
+    self.Duration:Hide()
     self:SetScript("OnUpdate", nil)
     return
   elseif seconds > 99 then
-    self.Duration:Hide()
+    if self.Duration:IsShown() then self.Duration:Hide() end
     return
   else
     self.Duration:SetText(_G.tostring(seconds))
@@ -219,7 +226,7 @@ for i = 1, maxAuras do
   auras[i] = {}
 end
 
-local function GetAuras(group)
+local function getAuras(group)
   local i = 1
   for _, filter in _G.ipairs(group.filters) do
     local queryIndex = 1
@@ -227,7 +234,7 @@ local function GetAuras(group)
       local aura = auras[i]
 
       aura.name, aura.rank, aura.icon, aura.count, aura.dispelType, aura.duration, aura.expires, aura.caster,
-      aura.isStealable, aura.shouldConsolidate, aura.spellID, aura.canApplyAura, aura.isBossDebuff, aura.value1,
+      aura.isStealable, aura.shouldConsolidate, aura.spellId, aura.canApplyAura, aura.isBossDebuff, aura.value1,
       aura.value2, aura.value3 = _G.UnitAura(group.unit, queryIndex, filter)
 
       if not aura.name then
@@ -238,15 +245,15 @@ local function GetAuras(group)
       aura.index = queryIndex
 
       if group.mutators then
-        if group.mutators[aura.spellID] then
-          group.mutators[aura.spellID](aura)
+        if group.mutators[aura.spellId] then
+          group.mutators[aura.spellId](aura)
         elseif group.mutators[aura.name] then
           group.mutators[aura.name](aura)
         end
       end
 
-      aura.isExtraStack = nil
-      local j = i + _G.math.min(aura.count or 1, maxDisplayedStacks)
+      --aura.isExtraStack = nil
+      --local j = i + _G.math.min(aura.count or 1, maxDisplayedStacks)
       i = i + 1
       --[[
       -- TODO: implement some sort of blacklist for auras where we don't care about stacks. The Tigereye Brew damage
@@ -270,11 +277,13 @@ local function GetAuras(group)
     end
   end
 
+  -- TODO: DR.
+
   if group.fakeAuras and _G.UnitExists(group.unit) then
     for _, fakeAura in _G.pairs(group.fakeAuras) do
       if i > maxAuras then break end
       if fakeAura.present(group.unit) then
-        auras[i].isExtraStack = nil
+        --auras[i].isExtraStack = nil
         for _, key in _G.ipairs(keys) do
           auras[i][key] = fakeAura[key]
         end
@@ -332,6 +341,7 @@ local function updateDisplay(display, group)
 
       frame.Icon:SetTexture(aura.icon)
 
+      --[[
       if aura.isExtraStack then
         frame.Icon:SetAlpha(.75)
         --_G.SetDesaturation(frame.Icon, true) -- http://wowprogramming.com/docs/widgets/Texture/SetDesaturated
@@ -339,6 +349,7 @@ local function updateDisplay(display, group)
         frame.Icon:SetAlpha(1)
         --_G.SetDesaturation(frame.Icon)
       end
+      ]]
 
       if aura.count and aura.count > 1 then
         frame.Count:Show()
@@ -434,11 +445,11 @@ local function updateDisplay(display, group)
   end
 end
 
-local function updateGroups(unitID)
-  if unitID and not _G.UnitExists(unitID) then
+local function updateGroups(unitId)
+  if unitId and not _G.UnitExists(unitId) then
     --[[
     for _, group in _G.ipairs(groups) do
-      if group.unit == unitID then
+      if group.unit == unitId then
         for _, display in _G.ipairs(group.displays) do
           display.wrapperFrame:Hide()
         end
@@ -447,8 +458,8 @@ local function updateGroups(unitID)
     ]]
   else
     for _, group in _G.ipairs(groups) do
-      if not unitID or group.unit == unitID then
-        GetAuras(group) -- Initialize the auras table and the numAuras variable.
+      if not unitId or group.unit == unitId then
+        getAuras(group) -- Initialize the auras table and the numAuras variable.
         for _, display in _G.ipairs(group.displays) do
           display.wrapperFrame:Show()
           updateDisplay(display, group)
@@ -460,9 +471,9 @@ end
 
 local handlerFrame = _G.CreateFrame("Frame")
 
-function handlerFrame:ADDON_LOADED(name)
+function addOn:ADDON_LOADED(name)
   _G.assert(_G.NinjaKittyUF)
-  self:UnregisterEvent("ADDON_LOADED")
+  handlerFrame:UnregisterEvent("ADDON_LOADED")
 
   for _, group in _G.ipairs(groups) do
     initGroup(group)
@@ -473,6 +484,7 @@ function handlerFrame:ADDON_LOADED(name)
   --handlerFrame:RegisterEvent("PLAYER_ALIVE")
 
   handlerFrame:RegisterEvent("UNIT_AURA")
+  --handlerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
   handlerFrame:RegisterEvent("UNIT_CONNECTION")
   handlerFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
   handlerFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
@@ -483,57 +495,133 @@ function handlerFrame:ADDON_LOADED(name)
   -- Fires when the composition of the party changes?
   handlerFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 
-  self.ADDON_LOADED = nil
+  handlerFrame.ADDON_LOADED = nil
 end
 
-function handlerFrame:PLAYER_LOGIN()
+function addOn:PLAYER_LOGIN()
   updateGroups()
 end
 
-function handlerFrame:PLAYER_ENTERING_WORLD()
+function addOn:PLAYER_ENTERING_WORLD()
   updateGroups()
 end
 
-function handlerFrame:UNIT_AURA(unitID) -- http://wowprogramming.com/docs/events/UNIT_AURA
-  updateGroups(unitID)
+function addOn:UNIT_AURA(unitId) -- http://wowprogramming.com/docs/events/UNIT_AURA
+  updateGroups(unitId)
 end
 
-function handlerFrame:UNIT_CONNECTION(unit, hasConnected)
-  updateGroups(unitID)
+function addOn:UNIT_CONNECTION(unit, hasConnected)
+  updateGroups(unitId)
 end
 
-function handlerFrame:PLAYER_TARGET_CHANGED(cause)
-  --if (_G.select(2, _G.GetInstanceInfo())) ~= "arena" then
-    updateGroups("target")
-  --end
+local trackedPlayers = {}
+
+local function onCcApplied(spellId, destName, destGUID, isPlayer)
+  -- Not a player, and this category isn't diminished in PVE, as well as make sure we want to track NPCs
+  local drCat = DRData:GetSpellCategory(spellId)
+  if not isPlayer and not DRData:IsPVE(drCat) then
+    return
+  end
+
+  if not trackedPlayers[destGUID] then
+    trackedPlayers[destGUID] = {}
+  end
+
+  -- See if we should reset it back to undiminished.
+  local tracked = trackedPlayers[destGUID][drCat]
+  if tracked and tracked.reset <= _G.GetTime() then
+    tracked.diminished = 1.0
+  end
 end
 
-function handlerFrame:PLAYER_FOCUS_CHANGED()
-  --if (_G.select(2, _G.GetInstanceInfo())) ~= "arena" then
-    updateGroups("focus")
-  --end
+local function onCcFaded(spellId, destName, destGUID, isPlayer)
+  local drCat = DRData:GetSpellCategory(spellId)
+  if not isPlayer and not DRData:IsPVE(drCat) then
+    return
+  end
+
+  if not trackedPlayers[destGUID] then
+    trackedPlayers[destGUID] = {}
+  end
+
+  if not trackedPlayers[destGUID][drCat] then
+    trackedPlayers[destGUID][drCat] = { reset = 0, diminished = 1.0 }
+  end
+
+  local time = _G.GetTime()
+  local tracked = trackedPlayers[destGUID][drCat]
+
+  tracked.reset = time + DRData:GetResetTime(drCat)
+  tracked.diminished = DRData:NextDR(tracked.diminished, drCat)
+
+  -- TODO: diminishing returns changed, do an update.
+  _G.print(destGUID, drCat, tracked.diminished)
 end
 
-function handlerFrame:UNIT_ENTERED_VEHICLE(unit, ...)
+-- TODO: replace unneeded parameters with underscores (_).
+function addOn:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, hideCaster, sourceGuid, sourceName, sourceFlags,
+  sourceRaidFlags, destGuid, destName, destFlags, destRaidFlag, spellId, spellName, spellSchool, auraType)
+  -- TODO: Only continue for units we actually display DR for. Check all groups while loading to get those units.
+
+  if event == "SPELL_AURA_APPLIED" then
+    if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
+      local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
+                       _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
+      --local isEnemy = _G.bit.band(destFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) > 0
+      onCcApplied(spellId, destName, destGuid, isPlayer)
+    end
+
+  elseif event == "SPELL_AURA_REFRESH" then
+    if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
+      local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
+                       _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
+      onCcApplied(spellId, destName, destGuid, isPlayer)
+      onCcFaded(spellId, destName, destGuid, isPlayer)
+    end
+
+  elseif event == "SPELL_AURA_REMOVED" then
+    if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
+      local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
+                       _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
+      onCcFaded(spellId, destName, destGuid, isPlayer)
+    end
+    -- ...
+  elseif --[[(event == "UNIT_DIED" and select(2, IsInInstance()) ~= "arena") or]] event == "PARTY_KILL" then
+    -- ...
+  end
+end
+
+function addOn:PLAYER_TARGET_CHANGED(cause)
+  updateGroups("target")
+end
+
+function addOn:PLAYER_FOCUS_CHANGED()
+  updateGroups("focus")
+end
+
+function addOn:UNIT_ENTERED_VEHICLE(unit, ...)
   _G.assert(unit == "player")
-  _G.assert(_G.UnitExists("vehicle")) -- TODO: fails sometimes. E.g. Darkmoon Faire Tonk Challenge.
-  updateGroups("vehicle")
+  if _G.UnitExists("vehicle") then -- Sometimes false. E.g. Darkmoon Faire Tonk Challenge.
+    updateGroups("vehicle")
+  else
+    -- TODO?
+  end
 end
 
-function handlerFrame:GROUP_ROSTER_UPDATE()
+function addOn:GROUP_ROSTER_UPDATE()
   for i = 1, 4 do
     updateGroups("party" .. i)
   end
 end
 
-function handlerFrame:ARENA_OPPONENT_UPDATE() -- TODO?
+function addOn:ARENA_OPPONENT_UPDATE() -- TODO?
   -- ...
 end
 
 handlerFrame:SetScript("OnEvent", function(self, event, ...)
-  return self[event](self, ...)
+  return addOn[event](addOn, ...)
 end)
 
 handlerFrame:RegisterEvent("ADDON_LOADED")
 
--- vim: tw=120 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et
