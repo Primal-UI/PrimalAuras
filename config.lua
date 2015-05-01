@@ -55,7 +55,6 @@ auras.coveredPlayerAuras = {
 --[[
 auras.longPlayerBuffBlacklist = {
   ["Leader of the Pack"] = true,
-  --["Symbiosis"] = true,
 }
 ]]
 
@@ -69,8 +68,6 @@ auras.importantOwnDebuffs = {
   [770]    = true, -- Faerie Fire
   [102355] = true, -- Faerie Swarm
 }
-
--- TODO: Shambling Rush (91807): wowhead.com/spell=91802, wowhead.com/spell=91807
 
 auras.roots = {
   [96294]  = true, -- Chains of Ice
@@ -105,19 +102,6 @@ auras.shortRoots = {
   [111340] = true, -- Ice Ward. TODO: confirm spell ID.
   [123407] = true, -- Spinning Fire Blossom. TODO: confirm spell ID.
   [64695]  = true, -- Earthgrab. TODO: confirm spell ID.
-}
-
-auras.disarms = {
-  --[[
-  [50541]  = true, -- Clench (Scorpid pet)
-  [676]    = true, -- Disarm
-  [137461] = true, -- Disarmed (Ring of Peace)
-  [51722]  = true, -- Dismantle
-  [117368] = true, -- Grapple Weapon
-  [126458] = true, -- Grapple Weapon
-  [91644]  = true, -- Snatch (Bird of Prey pet)
-  [64058]  = true, -- Psychic Horror
-  ]]
 }
 
 -- Full Crowd Control and Silences. Based on http://us.battle.net/wow/en/forum/topic/10195910192,
@@ -272,6 +256,7 @@ auras.immunities = {
   [115760] = true, -- Glyph of Ice Block
                    -- Greater Invisibility: TODO.
   [8178]   = true, -- Grounding Totem Effect
+  [89523]  = true, -- Grounding Totem (with reflect glyph). TODO: confirm spell ID.
   [1044]   = true, -- Hand of Freedom. TODO: confirm spell ID.
   [1022]   = true, -- Hand of Protection
   [152175] = true, -- Hurricane Strike
@@ -491,7 +476,7 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       showCooldownSweep = true,
       whitelist = function(aura)
-        return auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or auras.roots[aura.spellId] or
+        return auras.fullCC[aura.spellId] or auras.roots[aura.spellId] or
           auras.shortRoots[aura.spellId] or aura.spellId == 122470 --[[Touch of Karma]] or
           aura.spellId == 1022 --[[Hand of Protection]] or aura.spellId == 88611 --[[Smoke Bomb]]
       end,
@@ -601,7 +586,7 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       showCooldownSweep = true,
       whitelist = function(aura)
-        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or
           auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
       end,
       borderColor = borderColor,
@@ -621,7 +606,7 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or
           auras.defensives[aura.spellId] or auras.irrelevantAuras[aura.spellId] or
           (aura.filter == "HELPFUL" and aura.duration >= 300) or aura.shouldConsolidate or
           (auras.targetDebuffBlacklist[aura.spellId] and aura.caster == "player")
@@ -671,11 +656,11 @@ _G.table.insert(groups, {
       showCooldownSweep = true,
       --[[
       whitelist = function(aura)
-        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId]
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId]
       end,
       ]]
       whitelist = function(aura)
-        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+        return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or
           auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
       end,
       borderColor = borderColor,
@@ -727,7 +712,7 @@ for i = 1, 4 do
         orientation = "HORIZONTAL",
         showCooldownSweep = true,
         whitelist = function(aura)
-          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or
             auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
         end,
         borderColor = borderColor,
@@ -786,14 +771,13 @@ for i = 1, 3 do
         orientation = "HORIZONTAL",
         showCooldownSweep = true,
         whitelist = function(aura)
-          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or auras.disarms[aura.spellId] or
+          return auras.immunities[aura.spellId] or auras.fullCC[aura.spellId] or
             auras.defensives[aura.spellId] or auras.roots[aura.spellId] or auras.shortRoots[aura.spellId]
         end,
         --[[
         blacklist = function(aura)
           return (aura.filter == "HELPFUL" and not auras.immunities[aura.spellId]) or
-            (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellId] and not
-            auras.disarms[aura.spellId])
+            (aura.filter == "HARMFUL" and not auras.fullCC[aura.spellId])
         end,
         ]]
         borderColor = borderColor,

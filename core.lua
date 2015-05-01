@@ -507,6 +507,7 @@ function addOn:PLAYER_ENTERING_WORLD()
 end
 
 function addOn:UNIT_AURA(unitId) -- http://wowprogramming.com/docs/events/UNIT_AURA
+  --_G.print(_G.GetTime(), "UNIT_AURA", unitId)
   updateGroups(unitId)
 end
 
@@ -555,7 +556,7 @@ local function onCcFaded(spellId, destName, destGUID, isPlayer)
   tracked.diminished = DRData:NextDR(tracked.diminished, drCat)
 
   -- TODO: diminishing returns changed, do an update.
-  _G.print(destGUID, drCat, tracked.diminished)
+  _G.print(_G.GetTime() .. ": SPELL_AURA_REMOVED: " .. drCat .. " DR: " .. tracked.diminished)
 end
 
 -- TODO: replace unneeded parameters with underscores (_).
@@ -579,6 +580,7 @@ function addOn:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, hideCaster, sourceG
       onCcFaded(spellId, destName, destGuid, isPlayer)
     end
 
+  -- This appears to be posted before the correspoding UNIT_AURA event, but within the same frame.
   elseif event == "SPELL_AURA_REMOVED" then
     if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
       local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or

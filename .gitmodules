@@ -1,0 +1,3 @@
+[submodule "libs/DRData-1.0"]
+	path = libs/DRData-1.0
+	url = git://git.wowace.com/wow/drdata-1-0/mainline.git
