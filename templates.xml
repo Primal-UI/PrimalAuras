@@ -128,4 +128,4 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
   </Button>
 </Ui>
 
-<!-- vim: set tw=120 sw=2 et: -->
+<!-- vim: set tw=120 sts=2 sw=2 et: -->

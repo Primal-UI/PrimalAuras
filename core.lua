@@ -1,21 +1,35 @@
-local addOnName, addOn = ...
+local addonName, addon = ...
 
-addOn._G = _G
-setfenv(1, addOn)
+addon._G = _G
+setfenv(1, addon)
 
--- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active).
--- Implement functionality to drack DRs.
+-- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active)?
 
+------------------------------------------------------------------------------------------------------------------------
 local DRData = _G.LibStub:GetLibrary("DRData-1.0")
-DRData.resetTimes.default = 18.4 -- twitter.com/holinka/status/572482319849660416
+DRData.resetTimes.default = 20.4 -- twitter.com/holinka/status/572482319849660416 but 18.4 doesn't seem right...
+DRData.RESET_TIME = DRData.resetTimes.default
+
+local drIcons = {
+  root         = [[interface\icons\spell_nature_stranglevines]],
+  stun         = [[interface\icons\ability_druid_bash]],
+  disorient    = [[interface\icons\spell_nature_earthbind]],
+  silence      = [[interface\icons\ability_priest_silence]],
+  taunt        = [[interface\icons\ability_physical_taunt]],
+  incapacitate = [[interface\icons\spell_nature_polymorph]],
+  knockback    = [[interface\icons\ability_druid_typhoon]],
+}
+
+local drState = {}
+------------------------------------------------------------------------------------------------------------------------
 
 local keys = { "name", "rank", "icon", "count", "dispelType", "duration", "expires", "caster", "isStealable",
   "shouldConsolidate", "spellId", "canApplyAura", "isBossDebuff", "value1", "value2", "value3", "filter", "index" }
 
-local maxDisplayedStacks = 5
+--local maxDisplayedStacks = 5
 
 -- http://wowprogramming.com/snippets/Scan_a_tooltip_15
--- http://wowpedia.org/UIOBJECT_GameTooltip#Hidden_tooltip_for_scanning
+-- http://wow.gamepedia.com/UIOBJECT_GameTooltip#Hidden_tooltip_for_scanning
 local scanningTooltip = _G.CreateFrame("GameTooltip", "NKAScanningTooltip", nil, "GameTooltipTemplate")
 scanningTooltip:SetOwner(_G.WorldFrame, "ANCHOR_NONE")
 
@@ -40,11 +54,15 @@ local function setBorderColor(auraFrame, red, green, blue, alpha)
   auraFrame.BorderLeft:SetTexture(red, green, blue, alpha)
 end
 
+-- TODO: optimize this: only update the aura that will expires soonest each frame.
 local function NKAuraButton_OnUpdate(self, elapsed)
   local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
   if seconds < 0 then
     self.Duration:Hide()
     self:SetScript("OnUpdate", nil)
+    if self.auraFilter == "DR" then
+      self:Hide()
+    end
     return
   elseif seconds > 99 then
     if self.Duration:IsShown() then self.Duration:Hide() end
@@ -277,19 +295,44 @@ local function getAuras(group)
     end
   end
 
-  -- TODO: DR.
+  if group.includeDr then
+    for catName, dr in _G.pairs(drState[_G.UnitGUID(group.unit)] or {}) do
+      if _G.GetTime() < dr.reset then
+        local aura = auras[i]
+        for _, key in _G.ipairs(keys) do
+          aura[key] = nil
+        end
+
+        aura.name     = ""
+        aura.icon     = drIcons[catName]
+        aura.count    = 1
+        aura.duration = DRData:GetResetTime(catName)
+        aura.expires  = dr.reset
+        aura.spellId  = 0
+        aura.filter   = "DR"
+        aura.index    = i
+
+        local reduction = DRData:NextDR(1.0, catName)
+        repeat
+          reduction = DRData:NextDR(reduction, catName)
+          if reduction >= dr.reduction then
+            aura.count = aura.count + 1
+          end
+        until reduction <= dr.reduction
+
+        i = i + 1
+      end
+    end
+  end
 
   if group.fakeAuras and _G.UnitExists(group.unit) then
     for _, fakeAura in _G.pairs(group.fakeAuras) do
       if i > maxAuras then break end
       if fakeAura.present(group.unit) then
         --auras[i].isExtraStack = nil
-        for _, key in _G.ipairs(keys) do
+        for _, key in _G.ipairs(keys) do -- _G.pairs(fakeAura) would fail to reset some values to nil.
           auras[i][key] = fakeAura[key]
         end
-        --[[for k, v in _G.pairs(fakeAura) do
-          auras[i][k] = v
-        end]]
         auras[i].index = i
         i = i + 1
       end
@@ -299,7 +342,7 @@ local function getAuras(group)
   numAuras = i - 1
 
   while i <= maxAuras do
-    -- TODO: should (aura.name == nil) already be true for all auras after the first one for which is was?
+    -- TODO: should (aura.name == nil) already be true for all auras after the first one for which it was?
     auras[i].name = nil
     i = i + 1
   end
@@ -390,7 +433,7 @@ local function updateDisplay(display, group)
         if start < 0 then
           start = 0.000001 -- OmniCC doesn't work with cooldowns starting at 0.
           duration = aura.expires - start
-        elseif start > _G.GetTime() then -- The aura wasn't applied yet?! Does this really happen?
+        elseif start > _G.GetTime() then -- The aura wasn't applied yet. Does this really happen?
           start = _G.GetTime()
           duration = aura.expires - _G.GetTime()
         else
@@ -471,7 +514,7 @@ end
 
 local handlerFrame = _G.CreateFrame("Frame")
 
-function addOn:ADDON_LOADED(name)
+function addon:ADDON_LOADED(name)
   _G.assert(_G.NinjaKittyUF)
   handlerFrame:UnregisterEvent("ADDON_LOADED")
 
@@ -484,7 +527,7 @@ function addOn:ADDON_LOADED(name)
   --handlerFrame:RegisterEvent("PLAYER_ALIVE")
 
   handlerFrame:RegisterEvent("UNIT_AURA")
-  --handlerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+  handlerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
   handlerFrame:RegisterEvent("UNIT_CONNECTION")
   handlerFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
   handlerFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
@@ -498,86 +541,86 @@ function addOn:ADDON_LOADED(name)
   handlerFrame.ADDON_LOADED = nil
 end
 
-function addOn:PLAYER_LOGIN()
+function addon:PLAYER_LOGIN()
   updateGroups()
 end
 
-function addOn:PLAYER_ENTERING_WORLD()
+function addon:PLAYER_ENTERING_WORLD()
   updateGroups()
 end
 
-function addOn:UNIT_AURA(unitId) -- http://wowprogramming.com/docs/events/UNIT_AURA
+function addon:UNIT_AURA(unitId) -- http://wowprogramming.com/docs/events/UNIT_AURA
   --_G.print(_G.GetTime(), "UNIT_AURA", unitId)
   updateGroups(unitId)
 end
 
-function addOn:UNIT_CONNECTION(unit, hasConnected)
+function addon:UNIT_CONNECTION(unit, hasConnected)
   updateGroups(unitId)
 end
 
-local trackedPlayers = {}
-
-local function onCcApplied(spellId, destName, destGUID, isPlayer)
-  -- Not a player, and this category isn't diminished in PVE, as well as make sure we want to track NPCs
+local function onCcApplied(spellId, destGUID, isPlayer)
   local drCat = DRData:GetSpellCategory(spellId)
   if not isPlayer and not DRData:IsPVE(drCat) then
     return
   end
 
-  if not trackedPlayers[destGUID] then
-    trackedPlayers[destGUID] = {}
+  if not trackedDrCats[drCat] then return end
+
+  if not drState[destGUID] then
+    drState[destGUID] = {}
   end
 
   -- See if we should reset it back to undiminished.
-  local tracked = trackedPlayers[destGUID][drCat]
-  if tracked and tracked.reset <= _G.GetTime() then
-    tracked.diminished = 1.0
+  local dr = drState[destGUID][drCat]
+  if dr and dr.reset <= _G.GetTime() then
+    dr.reduction = 1.0
   end
 end
 
-local function onCcFaded(spellId, destName, destGUID, isPlayer)
+local function onCcFaded(spellId, destGUID, isPlayer)
   local drCat = DRData:GetSpellCategory(spellId)
   if not isPlayer and not DRData:IsPVE(drCat) then
     return
   end
 
-  if not trackedPlayers[destGUID] then
-    trackedPlayers[destGUID] = {}
+  if not trackedDrCats[drCat] then return end
+
+  if not drState[destGUID] then
+    drState[destGUID] = {}
   end
 
-  if not trackedPlayers[destGUID][drCat] then
-    trackedPlayers[destGUID][drCat] = { reset = 0, diminished = 1.0 }
+  if not drState[destGUID][drCat] then
+    drState[destGUID][drCat] = { reset = 0, reduction = 1.0 }
   end
 
   local time = _G.GetTime()
-  local tracked = trackedPlayers[destGUID][drCat]
+  local dr = drState[destGUID][drCat]
 
-  tracked.reset = time + DRData:GetResetTime(drCat)
-  tracked.diminished = DRData:NextDR(tracked.diminished, drCat)
-
-  -- TODO: diminishing returns changed, do an update.
-  _G.print(_G.GetTime() .. ": SPELL_AURA_REMOVED: " .. drCat .. " DR: " .. tracked.diminished)
+  dr.reset = time + DRData:GetResetTime(drCat)
+  dr.reduction = DRData:NextDR(dr.reduction, drCat)
 end
 
 -- TODO: replace unneeded parameters with underscores (_).
-function addOn:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, hideCaster, sourceGuid, sourceName, sourceFlags,
-  sourceRaidFlags, destGuid, destName, destFlags, destRaidFlag, spellId, spellName, spellSchool, auraType)
-  -- TODO: Only continue for units we actually display DR for. Check all groups while loading to get those units.
+function addon:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, _, _, _, _, _, destGuid, _, destFlags, _, ...)
+  -- This needs to run for all units. E.g. even if we don't show DR for friendly units, thing like mind control effects
+  -- or FFA arenas require us to update what DR they're on.
+
+  local spellId = (...)
+  local auraType = (_G.select(4, ...))
 
   if event == "SPELL_AURA_APPLIED" then
     if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
       local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
                        _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
-      --local isEnemy = _G.bit.band(destFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) > 0
-      onCcApplied(spellId, destName, destGuid, isPlayer)
+      onCcApplied(spellId, destGuid, isPlayer)
     end
 
   elseif event == "SPELL_AURA_REFRESH" then
     if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
       local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
                        _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
-      onCcApplied(spellId, destName, destGuid, isPlayer)
-      onCcFaded(spellId, destName, destGuid, isPlayer)
+      onCcApplied(spellId, destGuid, isPlayer)
+      onCcFaded(spellId, destGuid, isPlayer)
     end
 
   -- This appears to be posted before the correspoding UNIT_AURA event, but within the same frame.
@@ -585,7 +628,7 @@ function addOn:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, hideCaster, sourceG
     if auraType == "DEBUFF" and DRData:GetSpellCategory(spellId) then
       local isPlayer = _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_TYPE_PLAYER) > 0 or
                        _G.bit.band(destFlags, _G.COMBATLOG_OBJECT_CONTROL_PLAYER) > 0
-      onCcFaded(spellId, destName, destGuid, isPlayer)
+      onCcFaded(spellId, destGuid, isPlayer)
     end
     -- ...
   elseif --[[(event == "UNIT_DIED" and select(2, IsInInstance()) ~= "arena") or]] event == "PARTY_KILL" then
@@ -593,15 +636,15 @@ function addOn:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, hideCaster, sourceG
   end
 end
 
-function addOn:PLAYER_TARGET_CHANGED(cause)
+function addon:PLAYER_TARGET_CHANGED(cause)
   updateGroups("target")
 end
 
-function addOn:PLAYER_FOCUS_CHANGED()
+function addon:PLAYER_FOCUS_CHANGED()
   updateGroups("focus")
 end
 
-function addOn:UNIT_ENTERED_VEHICLE(unit, ...)
+function addon:UNIT_ENTERED_VEHICLE(unit, ...)
   _G.assert(unit == "player")
   if _G.UnitExists("vehicle") then -- Sometimes false. E.g. Darkmoon Faire Tonk Challenge.
     updateGroups("vehicle")
@@ -610,18 +653,18 @@ function addOn:UNIT_ENTERED_VEHICLE(unit, ...)
   end
 end
 
-function addOn:GROUP_ROSTER_UPDATE()
+function addon:GROUP_ROSTER_UPDATE()
   for i = 1, 4 do
     updateGroups("party" .. i)
   end
 end
 
-function addOn:ARENA_OPPONENT_UPDATE() -- TODO?
+function addon:ARENA_OPPONENT_UPDATE() -- TODO?
   -- ...
 end
 
 handlerFrame:SetScript("OnEvent", function(self, event, ...)
-  return addOn[event](addOn, ...)
+  return addon[event](addon, ...)
 end)
 
 handlerFrame:RegisterEvent("ADDON_LOADED")
