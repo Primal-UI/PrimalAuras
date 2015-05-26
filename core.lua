@@ -1,9 +1,14 @@
+-- TODO.  Optimize updating aura timers: stop updating after finding the soonest to expire aura that didn't expire this
+-- frame.  Implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active)?
+
 local addonName, addon = ...
 
 addon._G = _G
 setfenv(1, addon)
 
--- TODO: implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active)?
+print = function(...)
+  _G.print("|cffff7d0a" .. addonName .. "|r:", ...)
+end
 
 ------------------------------------------------------------------------------------------------------------------------
 local DRData = _G.LibStub:GetLibrary("DRData-1.0")
@@ -46,22 +51,23 @@ function blacklistByTooltip(unit, index, filter, blacklist)
   return false
 end
 
-local function setBorderColor(auraFrame, red, green, blue, alpha)
+local function setBorderColor(auraFrame, r, g, b, alpha)
   alpha = alpha or 1
-  auraFrame.BorderTop:SetTexture(red, green, blue, alpha)
-  auraFrame.BorderRight:SetTexture(red, green, blue, alpha)
-  auraFrame.BorderBottom:SetTexture(red, green, blue, alpha)
-  auraFrame.BorderLeft:SetTexture(red, green, blue, alpha)
+  auraFrame.BorderTop:SetTexture(r, g, b, alpha)
+  auraFrame.BorderRight:SetTexture(r, g, b, alpha)
+  auraFrame.BorderBottom:SetTexture(r, g, b, alpha)
+  auraFrame.BorderLeft:SetTexture(r, g, b, alpha)
 end
 
--- TODO: optimize this: only update the aura that will expires soonest each frame.
+local expireAura
+
 local function NKAuraButton_OnUpdate(self, elapsed)
   local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
   if seconds < 0 then
     self.Duration:Hide()
     self:SetScript("OnUpdate", nil)
     if self.auraFilter == "DR" then
-      self:Hide()
+      expireAura(self)
     end
     return
   elseif seconds > 99 then
@@ -72,11 +78,86 @@ local function NKAuraButton_OnUpdate(self, elapsed)
   end
 end
 
+-- TODO.
+local function updateTimers(_, elapsed)
+  --[[
+  for i = 1, #temporaryAuras do
+    local frame = temporaryAuras[i]
+    local seconds = _G.math.floor(frame.expires - _G.GetTime() + .5)
+    if seconds < 0 then
+      -- ...
+    else
+      break
+    end
+  end
+  --]]
+end
+
+do
+  local f = _G.CreateFrame("frame")
+  f:SetScript("OnUpdate", updateTimers)
+end
+
+-- Remove the aura and shift the display's remaining auras.  Used for DR.  TODO.
+function expireAura(frame)
+  local display   = frame:GetParent().display
+  local i         = _G.string.match(frame:GetName(), "%d+") + 1
+  local nextFrame = display.frames[i]
+
+  -- TODO: move the code to copy an aura frame into a dedicated function.
+  while nextFrame and nextFrame:IsShown() do
+    frame.auraIndex  = nextFrame.auraIndex
+    frame.auraFilter = nextFrame.auraFilter
+
+    frame.Icon:SetTexture(nextFrame.Icon:GetTexture())
+
+    if nextFrame.Count:IsShown() then
+      frame.Count:Show()
+      frame.Count:SetText(nextFrame.Count:GetText())
+    else
+      frame.Count:Hide()
+    end
+
+    -- This also works for textures that are set to a solid color.  GetTexture() returns something like "Color-ff00ff"
+    -- then (that one was red; not sure how it works).
+    frame.BorderTop:SetTexture(nextFrame.BorderTop:GetTexture())
+    frame.BorderRight:SetTexture(nextFrame.BorderRight:GetTexture())
+    frame.BorderBottom:SetTexture(nextFrame.BorderBottom:GetTexture())
+    frame.BorderLeft:SetTexture(nextFrame.BorderLeft:GetTexture())
+
+    frame.duration, frame.expires, frame.start = nextFrame.duration, nextFrame.expires, nextFrame.start
+
+    if nextFrame.Duration:IsShown() then
+      frame.Duration:Show()
+      frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
+      if display.showCooldownSweep then
+        frame.Cooldown:SetCooldown(start, duration)
+      end
+    else
+      frame.Cooldown:Hide()
+      frame.Duration:Hide()
+      frame:SetScript("OnUpdate", nil)
+    end
+
+    if frame:IsMouseOver() then
+      frame:GetScript("OnEnter")(frame, false)
+    end
+
+    i = i + 1
+    frame = nextFrame
+    nextFrame = display.frames[i]
+  end
+
+  frame:Hide()
+end
+
 local function initDisplay(display, group)
   local parent = display.parent and _G[display.parent] or _G.UIParent
 
   display.wrapperFrame = _G.CreateFrame("Frame", display.name, parent)
   display.wrapperFrame:SetFrameLevel(10)
+
+  display.wrapperFrame.display = display
 
   -- When the display is implicitly hidden due to a parent frame being hidden, hide it explicitly. Otherwise it will be
   -- shown again when the parent frame becomes visible, even thought we didn't update it.  TODO: isn't that fine?
@@ -163,8 +244,9 @@ local function initDisplay(display, group)
       end)
     end
 
+    -- FIXME: will this create lots of functions?  I guess it's better to use a named funtion then.
     frame:SetScript("OnEnter", function(self, motion)
-      if group.unit and self.auraIndex and self.auraFilter then
+      if _G.UnitExists(group.unit) and self.auraIndex and self.auraFilter and self.auraFilter ~= "DR" then
         _G.GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
         _G.GameTooltip:SetUnitAura(group.unit, self.auraIndex, self.auraFilter)
       end
@@ -397,11 +479,13 @@ local function updateDisplay(display, group)
       if aura.count and aura.count > 1 then
         frame.Count:Show()
         frame.Count:SetText(aura.count)
+        --[[
         local width = frame.Count:GetStringWidth()
         if width % 2 == 1 then
           width = width + 1
         end
         local height = frame.Count:GetStringHeight()
+        ]]
       else
         frame.Count:Hide()
       end
@@ -413,14 +497,18 @@ local function updateDisplay(display, group)
 
       frame.duration, frame.expires, frame.start = aura.duration, aura.expires, 0
 
+      _G.assert((aura.duration ~= 0 and aura.expires ~= 0) or (aura.duration == 0 and aura.expires == 0))
+
       if aura.duration == 0 and aura.expires == 0 then
         frame.Cooldown:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
+      --[[
       elseif aura.duration == 0 then -- We only got the time at which the aura will expire.
         _G.error()
       elseif aura.expires == 0 then -- We only got a duration.
         _G.error()
+      ]]
       elseif aura.expires > _G.GetTime() then -- The aura expires in the future (like you might expect).
         local duration
 
@@ -446,15 +534,16 @@ local function updateDisplay(display, group)
           --_G.CooldownFrame_SetTimer(frame.Cooldown, start, duration, true)
           frame.Cooldown:SetCooldown(start, duration)
         end
-      else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.
+      else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.  TODO:  display "0"?  Fade the frame?
         frame.Cooldown:Hide()
         frame.Duration:Hide()
         frame:SetScript("OnUpdate", nil)
       end
+
       if frame:IsMouseOver() then
-        local handler = frame:GetScript("OnEnter")
-        handler(frame, false)
+        frame:GetScript("OnEnter")(frame, false)
       end
+
       frame:Show()
 
       aura.name = nil -- TODO: Make this behaviour controllable?
@@ -490,25 +579,18 @@ end
 
 local function updateGroups(unitId)
   if unitId and not _G.UnitExists(unitId) then
-    --[[
-    for _, group in _G.ipairs(groups) do
-      if group.unit == unitId then
-        for _, display in _G.ipairs(group.displays) do
-          display.wrapperFrame:Hide()
-        end
-      end
-    end
-    ]]
+    -- Don't hide the group.
   else
     for _, group in _G.ipairs(groups) do
       if not unitId or group.unit == unitId then
         getAuras(group) -- Initialize the auras table and the numAuras variable.
         for _, display in _G.ipairs(group.displays) do
-          display.wrapperFrame:Show()
+          --display.wrapperFrame:Show()
           updateDisplay(display, group)
         end
       end
     end
+    -- TODO: populate the temporaryAuras table now?  Or maybe next frame?
   end
 end
 

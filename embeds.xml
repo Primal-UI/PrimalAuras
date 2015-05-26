@@ -2,3 +2,5 @@
   <Script file="libs\LibStub\LibStub.lua"/>
   <Include file="libs\DRData-1.0\DRData-1.0.xml"/>
 </Ui>
+
+<!-- vim: set tw=120 sts=2 sw=2 et: -->

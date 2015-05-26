@@ -1,21 +1,21 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
-  <Font name="NKDurationFont" font="Interface\AddOns\NinjaKittyMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
+  <Font name="PrimalDurationFont" font="Interface\AddOns\PrimalMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
   virtual="true">
     <FontHeight>
       <AbsValue val="14"/>
     </FontHeight>
   </Font>
 
-  <Font name="NKDurationFontLeft" inherits="NKDurationFont" justifyH="LEFT" virtual="true"/>
-  <Font name="NKDurationFontRight" inherits="NKDurationFont" justifyH="RIGHT" virtual="true"/>
-  <Font name="NKDurationFontCenter" inherits="NKDurationFont" justifyH="CENTER" virtual="true"/>
+  <Font name="PrimalDurationFontLeft" inherits="PrimalDurationFont" justifyH="LEFT" virtual="true"/>
+  <Font name="PrimalDurationFontRight" inherits="PrimalDurationFont" justifyH="RIGHT" virtual="true"/>
+  <Font name="PrimalDurationFontCenter" inherits="PrimalDurationFont" justifyH="CENTER" virtual="true"/>
 
-  <FontString name="NKDurationFontStringLeft" inherits="NKDurationFontLeft" wordwrap="false" virtual="true"/>
-  <FontString name="NKDurationFontStringRight" inherits="NKDurationFontRight" wordwrap="false" virtual="true"/>
-  <FontString name="NKDurationFontStringCenter" inherits="NKDurationFontCenter" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalDurationFontStringLeft" inherits="PrimalDurationFontLeft" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalDurationFontStringRight" inherits="PrimalDurationFontRight" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalDurationFontStringCenter" inherits="PrimalDurationFontCenter" wordwrap="false" virtual="true"/>
 
-  <Font name="NKCountFont" font="Interface\AddOns\NinjaKittyMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
+  <Font name="NKCountFont" font="Interface\AddOns\PrimalMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
   virtual="true">
     <!--
     <Shadow>
@@ -79,7 +79,7 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
         </Texture>
       </Layer>
       <Layer level="ARTWORK">
-        <FontString parentKey="Duration" inherits="NKDurationFontStringCenter" justifyH="CENTER" justifyV="BOTTOM">
+        <FontString parentKey="Duration" inherits="PrimalDurationFontStringCenter" justifyH="CENTER" justifyV="BOTTOM">
           <Anchors>
             <!-- <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/> -->
             <Anchor point="BOTTOM" y="1"/>

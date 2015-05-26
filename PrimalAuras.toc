@@ -1,7 +1,7 @@
 ## Interface: 60100
-## Title: PrimalAuras
+## Title: |cffff7d0aPrimalAuras|r
 ## Notes: Aura frames. Component of PrimalUI.
-## Dependencies: NinjaKittyCore, NinjaKittyUF
+## Dependencies: PrimalCore, PrimalMedia, NinjaKittyUF
 ## OptionalDeps: OmniCC
 ## Author: meribold
 ## Version: 0.2
