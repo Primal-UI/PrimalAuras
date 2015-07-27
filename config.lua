@@ -1,5 +1,7 @@
-local addonName, addon = ...
+-- TODO: Add these auras: Orb of Power (?), 118358 (Drink).  Only show Smoke Bomb if it's casted by a hostile Rogue?
+-- Show Faerie Fire and Faerie Swarm as CC?
 
+local addonName, addon = ...
 setfenv(1, addon)
 
 trackedDrCats = {
@@ -11,20 +13,24 @@ trackedDrCats = {
 
 auras, groups, comparators, mutators, fakeAuras = {}, {}, {}, {}, {}
 
--- TODO: Add these auras: Orb of Power (?), Nature's Swiftness (?), 118358 (Drink). Only show Smoke Bomb if it's casted
--- by a hostile Rogue? Show Faerie Fire and Faerie Swarm as CC?
+-- Dispel types.
+local ENRAGE  = ""
+local CURSE   = "Curse"
+local DISEASE = "Disease"
+local MAGIC   = "Magic"
+local POISON  = "Poison"
 
--- Use this one for all buff groups. We never care about these auras.
+-- Use this one for all buff groups.  We never care about these auras.
 auras.irrelevantAuras = {
   [142247] = true, -- Brawling Champion
   [2479]   = true, -- Honorless Target
-  [46705]  = true, -- Honorless Target, TODO: are both of these relevant?
+  [46705]  = true, -- Honorless Target; TODO: are both of these relevant?
   [72968]  = true, -- Precious's Ribbon
-  [70404]  = true, -- Precious's Ribbon, TODO: are both of thse relevant?
+  [70404]  = true, -- Precious's Ribbon; TODO: are both of thse relevant?
   [145389] = true, -- Temporal Anomaly
 }
 
--- These auras (for player) are already shown by other addons. TODO: Leader of the Pack?
+-- These auras are already shown by other addons (for the player).  TODO: Leader of the Pack?
 auras.coveredPlayerAuras = {
   [1066]   = true, -- Aquatic Form
   [22812]  = true, -- Barkskin
@@ -50,13 +56,14 @@ auras.coveredPlayerAuras = {
   [58984]  = true, -- Shadowmeld
   [81022]  = true, -- Stampede
   [131538] = true, -- Stampede
-  [77761]  = true, -- Stampeding Roar (when used in Bear Form)
-  [77764]  = true, -- Stampeding Roar (when used in Cat Form)
+  [77761]  = true, -- Stampeding Roar (when used in bear form)
+  [77764]  = true, -- Stampeding Roar (when used in cat form)
   [106898] = true, -- Stampeding Roar (when used in caster form)
-  [182068] = true, -- Surge of Conquest.
+  [182068] = true, -- Surge of Conquest (Primal Gladiator's Insignia of Conquest)
+  [182059] = true, -- Surge of Conquest (Wild Combatant's Insignia of Conquest)
+  [190026] = true, -- Surge of Conquest (Wild Gladiator's Insignia of Conquest)
   [61336]  = true, -- Survival Instincts
   [40120]  = true, -- Swift Flight Form
-  [96228]  = true, -- Synapse Springs
   [5217]   = true, -- Tiger's Fury
   [783]    = true, -- Travel Form
 }
@@ -73,38 +80,38 @@ auras.importantOwnDebuffs = {
 auras.roots = {
   [96294]  = true, -- Chains of Ice
   [339]    = true, -- Entangling Roots
-  [170855] = true, -- Entangling Roots (Nature's Grasp). Nature's Grasp is 170856.
-  [113770] = true, -- Entangling Roots (Force of Nature). This spell ID is correct for Feral; TODO: also for Balance?
+  [170855] = true, -- Entangling Roots (Nature's Grasp).  Nature's Grasp is 170856.
+  [113770] = true, -- Entangling Roots (Force of Nature).  This spell ID is correct for Feral; TODO: also for Balance?
   [102359] = true, -- Mass Entanglement
-  [136634] = true, -- Narrow Escape. TODO: confirm spell ID.
-  [33395]  = true, -- Freeze (Water Elemental). TODO: confirm spell ID.
-  [102051] = true, -- Frostjaw (Silence and Root). TODO: confirm spell ID.
-  [122]    = true, -- Frost Nova. TODO: confirm spell ID.
-  [116706] = true, -- Disable. TODO: confirm spell ID.
-  [87194]  = true, -- Glyph of Mind Blast. TODO: confirm spell ID.
-  [114404] = true, -- Void Tendril's Grasp. TODO: confirm spell ID.
-  [115197] = true, -- Partial Paralysis. TODO: confirm spell ID.
-  [63685]  = true, -- Freeze (Frost Shock with Frozen Power talent). TODO: confirm spell ID.
-  [107566] = true, -- Staggering Shout. TODO: confirm spell ID.
-  [105771] = true, -- Warbringer (Charge). TODO: confirm spell ID.
-  [91807]  = true, -- Shambling Rush (Ghoul with Dark Transformation; Unholy Death Knight). Spell ID confirmed.
+  [136634] = true, -- Narrow Escape.  TODO: confirm spell ID.
+  [33395]  = true, -- Freeze (Water Elemental).  TODO: confirm spell ID.
+  [102051] = true, -- Frostjaw (Silence and Root).  TODO: confirm spell ID.
+  [122]    = true, -- Frost Nova.  TODO: confirm spell ID.
+  [116706] = true, -- Disable.  TODO: confirm spell ID.
+  [87194]  = true, -- Glyph of Mind Blast.  TODO: confirm spell ID.
+  [114404] = true, -- Void Tendril's Grasp.  TODO: confirm spell ID.
+  [115197] = true, -- Partial Paralysis.  TODO: confirm spell ID.
+  [63685]  = true, -- Freeze (Frost Shock with Frozen Power talent).  TODO: confirm spell ID.
+  [107566] = true, -- Staggering Shout.  TODO: confirm spell ID.
+  [105771] = true, -- Warbringer (Charge).  TODO: confirm spell ID.
+  [91807]  = true, -- Shambling Rush (Ghoul with Dark Transformation; Unholy Death Knight).  Spell ID confirmed.
   [45334]  = true, -- Immobilized (Bear Form Wild Charge)
-  [64803]  = true, -- Entrapment. TODO: confirm spell ID. I think this isn't the correct ID.
-  [135373] = true, -- Entrapment. TODO: confirm spell ID. I think this is the correct ID.
-  [111340] = true, -- Ice Ward. TODO: confirm spell ID.
-  [123407] = true, -- Spinning Fire Blossom. TODO: confirm spell ID.
-  [64695]  = true, -- Earthgrab. TODO: confirm spell ID.
+  [64803]  = true, -- Entrapment.  TODO: confirm spell ID.  I think this isn't the correct ID.
+  [135373] = true, -- Entrapment.  TODO: confirm spell ID.  I think this is the correct ID.
+  [111340] = true, -- Ice Ward.  TODO: confirm spell ID.
+  [123407] = true, -- Spinning Fire Blossom.  TODO: confirm spell ID.
+  [64695]  = true, -- Earthgrab.  TODO: confirm spell ID.
   -- TODO: Are the following pet skills still in the game?
-  [53148]  = true, -- Charge (Tenacity pet). TODO: confirm spell ID.
-  [50245]  = true, -- Pin (Crab pet). TODO: confirm spell ID.
-  [90327]  = true, -- Lock Jaw (Dog pet). TODO: confirm spell ID.
-  [4167]   = true, -- Web (Spider pet). TODO: confirm spell ID.
-  [54706]  = true, -- Venom Web Spray (Silithid pet). TODO: confirm spell ID.
+  [53148]  = true, -- Charge (Tenacity pet).  TODO: confirm spell ID.
+  [50245]  = true, -- Pin (Crab pet).  TODO: confirm spell ID.
+  [90327]  = true, -- Lock Jaw (Dog pet).  TODO: confirm spell ID.
+  [4167]   = true, -- Web (Spider pet).  TODO: confirm spell ID.
+  [54706]  = true, -- Venom Web Spray (Silithid pet).  TODO: confirm spell ID.
 }
 
--- Full Crowd Control and Silences. Based on http://us.battle.net/wow/en/forum/topic/10195910192,
--- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius. TODO: sort these into
--- the actual remaining categories.
+-- Full Crowd Control and Silences.  Based on http://us.battle.net/wow/en/forum/topic/10195910192,
+-- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius.  TODO: sort these
+-- into the actual remaining categories.
 auras.fullCc = {
   -- *Stuns* --
   [108194] = true, -- Asphyxiate
@@ -120,7 +127,7 @@ auras.fullCc = {
   [157997] = true, -- Ice Nova
   --[118271] = true, -- Combustion Impact
   [44572]  = true, -- Deep Freeze
-  [123687] = true, -- Charging Ox Wave. Confirmed ID.
+  [123687] = true, -- Charging Ox Wave.  Confirmed ID.
   [122242] = true, -- Clash
   [120086] = true, -- Fists of Fury
   [119381] = true, -- Leg Sweep
@@ -224,7 +231,7 @@ auras.immunities = {
   [48707]  = true, -- Anti-Magic Shell
   [172106] = true, -- Aspect of the Fox
   [46924]  = true, -- Bladestorm
-  [170847] = true, -- Celestial Protection. TODO: confirm spell ID. Is this in the game?
+  [170847] = true, -- Celestial Protection.  Druid WoD PvP Balance 4P Bonus (aura mastery).  TODO: cofirm spell ID.
   [31224]  = true, -- Cloak of Shadows
   [110913] = true, -- Dark Bargain
   [122465] = true, -- Dematerialize
@@ -235,39 +242,40 @@ auras.immunities = {
   [114406] = true, -- Deterrence (?)
   [148467] = true, -- Deterrence (?)
   [115018] = true, -- Desecrated Ground (spell ID is tested)
-  [152150] = true, -- Death from Above. Spell ID confirmed.
+  [152150] = true, -- Death from Above.  Spell ID confirmed.
   [47585]  = true, -- Dispersion
   [642]    = true, -- Divine Shield
-  [31821]  = true, -- Devotion Aura. TODO: confirm spell ID.
+  [31821]  = true, -- Devotion Aura.  TODO: confirm spell ID.
   [6346]   = true, -- Fear Ward
   [159438] = true, -- Glyph of Enchanted Bark
   [115760] = true, -- Glyph of Ice Block
                    -- Greater Invisibility: TODO.
   [8178]   = true, -- Grounding Totem Effect
-  [89523]  = true, -- Grounding Totem (with reflect glyph). TODO: confirm spell ID.
-  [1044]   = true, -- Hand of Freedom. TODO: confirm spell ID.
+  [89523]  = true, -- Grounding Totem (with reflect glyph).  TODO: confirm spell ID.
+  [1044]   = true, -- Hand of Freedom.  TODO: confirm spell ID.
   [1022]   = true, -- Hand of Protection
   [152175] = true, -- Hurricane Strike
   [45438]  = true, -- Ice Block
   [48792]  = true, -- Icebound Fortitude
   [3411]   = true, -- Intervene
   [147833] = true, -- Intervene; TODO: remove incorrect spell ID, confirm spell ID.
-  [32612]  = true, -- Invisibility; Seems to be correct spell ID. 66 is the ID of the spell.
+  [32612]  = true, -- Invisibility; Seems to be correct spell ID.  66 is the ID of the spell.
   [51690]  = true, -- Killing Spree; TODO: confirm spell ID.
   [114028] = true, -- Mass Spell Reflection
   [54216]  = true, -- Master's Call; TODO: remove one of these?
   [62305]  = true, -- Master's Call; TODO: remove one of these?
   [137562] = true, -- Nimble Brew
-  [159630] = true, -- Shadow Magic. Spell ID confirmed.
+  [159630] = true, -- Shadow Magic.
                    -- Shroud of Concealment: TODO?
   [114029] = true, -- Safeguard
   [112833] = true, -- Spectral Guise
   [23920]  = true, -- Spell Reflection
-  [131558] = true, -- Spiritwalker's Aegis. TODO: confirm spell ID.
-  [79206]  = true, -- Spiritwalker's Grace. TODO: confirm spell ID.
-                   -- TODO: Tremor Totem. Does this even apply an aura?
+  [131558] = true, -- Spiritwalker's Aegis.  TODO: confirm spell ID.
+  [79206]  = true, -- Spiritwalker's Grace.  TODO: confirm spell ID.
+                   -- TODO: Tremor Totem.  Does this even apply an aura?
   [114896] = true, -- Windwalk Totem
-  [124488] = true, -- Zen Focus. TODO: confirm spell ID.
+  [124488] = true, -- Zen Focus.  FIXME: this is probably the wrong spell ID.
+  [159546] = true, -- Glyph of Zen Focus.  TODO: confirm spell ID.
   [115176] = true, -- Zen Meditation
 }
 
@@ -275,37 +283,46 @@ auras.defensive = {
   [108271] = true, -- Astral Shift
   [22812]  = true, -- Barkskin
   [74002]  = true, -- Combat Insight
-  [74001]  = true, -- Combat Readiness
   [118038] = true, -- Die by the Sword
   [5277]   = true, -- Evasion
   [1966]   = true, -- Feint
   [47788]  = true, -- Guardian Spirit
-  [6940]   = true, -- Hand of Sacrifice. TODO: confirm spell ID.
+  [6940]   = true, -- Hand of Sacrifice.  TODO: confirm spell ID.
   [102342] = true, -- Ironbark
   [12975]  = true, -- Last Stand
   [116849] = true, -- Life Cocoon
   [33206]  = true, -- Pain Suppression
-  [97463]  = true, -- Rallying Cry. 97462 is the actual spell.
+  [97463]  = true, -- Rallying Cry.  97462 is the actual spell.
   [53480]  = true, -- Roar of Sacrifice
   [30823]  = true, -- Shamanistic Rage
   [61336]  = true, -- Survival Instincts
   [871]    = true, -- Shield Wall
-  [125174] = true, -- Touch of Karma (buff)
+  [125174] = true, -- Touch of Karma (Buff)
 }
 
 auras.offensive = {
-  [84745] = true, -- Shallow Insight
-  [84746] = true, -- Moderate Insight
-  [84747] = true, -- Deep Insight
+  [106951] = true, -- Berserk (Cat Form)
+  [84745]  = true, -- Shallow Insight
+  [84746]  = true, -- Moderate Insight
+  [84747]  = true, -- Deep Insight
 }
 
-auras.utility = {
+auras.utility --[[ Is auras.other more fitting? ]] = {
   [31842]  = true, -- Avenging Wrath
-  [69369]  = true, -- Predatory Swiftness
+  [74001]  = true, -- Combat Readiness
+  [112071] = true, -- Celestial Alignment
+  [770]    = true, -- Faerie Fire; should this be classified as CC?
+  [102355] = true, -- Faerie Swarm; should this be classified as CC?
+  [25771]  = true, -- Forbearance, TODO: confirm spell ID
+  [41425]  = true, -- Hypothermia, TODO: confirm spell ID
+  [54149]  = true, -- Infusion of Light, TODO: confirm spell ID
+  [102543] = true, -- Incarnation: King of the Jungle
+  [132158] = true, -- Nature's Swiftness, TODO: confirm spell ID
+--[69369]  = true, -- Predatory Swiftness
+  [115000] = true, -- Remorseless Winter
+  [155274] = true, -- Saving Grace
   [114108] = true, -- Soul of the Forest (Restoration Druid Buff)
   [73685]  = true, -- Unleash Life
-  [770]    = true, -- Faerie Fire; TODO: should this be classified as CC?
-  [102355] = true, -- Faerie Swarm TODO: ditto
 }
 
 -- TODO.
@@ -325,9 +342,6 @@ mutators.generalBuffMutators = {
   ["Inner Will"] = function(aura)
     aura.shouldConsolidate = 1
   end,
-  [161780] = function(aura) -- Gaze of the Black Prince
-    aura.shouldConsolidate = 1
-  end,
   [128943] = function(aura) -- Cyclonic Inspiration (Shrine of Seven Stars)
     aura.shouldConsolidate = 1
   end,
@@ -342,12 +356,6 @@ mutators.debuffMutators = {
     aura.caster = "player"
   end,
   ["Faerie Swarm"] = function(aura)
-    aura.caster = "player"
-  end,
-  ["Weakened Blows"] = function(aura)
-    aura.caster = "player"
-  end,
-  ["Weakened Armor"] = function(aura)
     aura.caster = "player"
   end,
 }
@@ -371,7 +379,6 @@ do
     name = "Stats missing",
     icon = [[Interface\Icons\Spell_Nature_Regeneration]],
     count = 0,
-    --dispelType = "Curse",
     duration = 0,
     expires = 0,
     spellId = 1126,
@@ -397,16 +404,18 @@ do
 end
 
 -- These order functions receive two arguments and must return true if the first argument should come first in the
--- sorted array. Note that Lua's table.sort is not a stable sort. TODO: should these be specified for each display
+-- sorted array.  Note that Lua's table.sort is not a stable sort.  TODO: should these be specified for each display
 -- instead of group?
 ------------------------------------------------------------------------------------------------------------------------
 comparators.longerFirst = function(aura1, aura2)
   if (aura1.expires == 0 and aura2.expires == 0) or aura1.expires == aura2.expires then -- Neither aura expires.
+    --[[
     if aura1.isExtraStack and not aura2.isExtraStack then
       return false
     elseif not aura1.isExtraStack and aura2.isExtraStack then
       return true
     end
+    --]]
     return aura1.index < aura2.index -- TODO: sort by name instead of index?
   elseif aura1.expires == 0 then -- Only aura1 is permanent.
     return true
@@ -447,9 +456,9 @@ end
 -- TODO: should border colors be global instead of being specified uniquely for each display?
 local function borderColor(aura)
   if aura.dispelType then
-    if aura.dispelType == "Curse" then
+    if aura.dispelType == CURSE then
       return .75, .25, 1
-    elseif aura.dispelType == "Poison" then
+    elseif aura.dispelType == POISON then
       return .1, 1, .15
     end
   end
@@ -487,7 +496,8 @@ _G.table.insert(groups, {
       showCooldownSweep = true,
       whitelist = function(aura)
         return auras.fullCc[aura.spellId] or auras.roots[aura.spellId] or aura.spellId == 122470 --[[Touch of Karma]] or
-          aura.spellId == 1022 --[[Hand of Protection]] or aura.spellId == 88611 --[[Smoke Bomb]]
+          aura.spellId == 1022 --[[Hand of Protection]] or aura.spellId == 88611 --[[Smoke Bomb]] or
+          aura.spellId == 117405 --[[Binding Shot]]
       end,
       borderColor = borderColor,
     },
@@ -504,11 +514,11 @@ _G.table.insert(groups, {
       numRows = 1,
       numCols = 4,
       orientation = "HORIZONTAL",
-      whitelist = function(aura) -- TODO: what else should be added?
+      showCooldownSweep = true,
+      whitelist = function(aura)
         return auras.immunities[aura.spellId] or auras.defensive[aura.spellId] or aura.name == "Soul Reaper"
           or aura.name == "Dark Simulacrum" or aura.name == "Devouring Plague" or aura.spellId == 6346 --[[Fear Ward]]
-          --or aura.name == "Devotion Aura"
-          --or aura.name == "Tricks of the Trade" or aura.spellId == 172106 --[[Aspect of the Fox]]
+          or aura.spellId == 115000 --[[Remorseless Winter]]
       end,
       borderColor = borderColor,
     },
@@ -595,7 +605,8 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId]
+        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+          aura.dispelType == ENRAGE
       end,
       borderColor = borderColor,
     },
@@ -682,7 +693,8 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId]
+        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+          aura.dispelType == ENRAGE
       end,
       borderColor = borderColor,
     },
@@ -786,8 +798,8 @@ for i = 1, 4 do
         orientation = "HORIZONTAL",
         blacklist = function(aura)
           return (aura.filter == "HELPFUL" and (aura.duration >= 300 or aura.shouldConsolidate or
-            aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= "Curse" and
-            aura.dispelType ~= "Poison" and aura.name ~= "Stats missing")
+            aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= CURSE and
+            aura.dispelType ~= POISON and aura.name ~= "Stats missing")
         end,
         borderColor = borderColor,
       },
@@ -816,7 +828,8 @@ for i = 1, 3 do -- Define groups for arena opponents.
         numCols = 7,
         orientation = "HORIZONTAL",
         whitelist = function(aura)
-          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId]
+          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+            aura.dispelType == ENRAGE
         end,
         borderColor = borderColor,
       },

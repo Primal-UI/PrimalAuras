@@ -1,5 +1,6 @@
 -- TODO.  Optimize updating aura timers: stop updating after finding the soonest to expire aura that didn't expire this
 -- frame.  Implement some system to hide auras that are exact duplicates (Roar of Sacrifice while Stampede is active)?
+-- Fade expired auras and display "0" for their remaining duration.
 
 local addonName, addon = ...
 
@@ -61,10 +62,10 @@ end
 
 local expireAura
 
-local function NKAuraButton_OnUpdate(self, elapsed)
+local function PrimalAuraButton_OnUpdate(self, elapsed)
   local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
   if seconds < 0 then
-    self.Duration:Hide()
+    --self.Duration:Hide()
     self:SetScript("OnUpdate", nil)
     if self.auraFilter == "DR" then
       expireAura(self)
@@ -129,7 +130,7 @@ function expireAura(frame)
 
     if nextFrame.Duration:IsShown() then
       frame.Duration:Show()
-      frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
+      frame:SetScript("OnUpdate", PrimalAuraButton_OnUpdate)
       if display.showCooldownSweep then
         frame.Cooldown:SetCooldown(start, duration)
       end
@@ -159,14 +160,16 @@ local function initDisplay(display, group)
 
   display.wrapperFrame.display = display
 
-  -- When the display is implicitly hidden due to a parent frame being hidden, hide it explicitly. Otherwise it will be
-  -- shown again when the parent frame becomes visible, even thought we didn't update it.  TODO: isn't that fine?
+  -- When the display is implicitly hidden due to a parent frame being hidden, hide it explicitly.  Otherwise it will be
+  -- shown again when the parent frame becomes visible, even thought we didn't update it.  Isn't that fine?
+  --[[
   display.wrapperFrame:SetScript("OnHide", function(self)
-    --self:Hide()
+    self:Hide()
   end)
   display.wrapperFrame:SetScript("OnShow", function(self)
     -- ...
   end)
+  --]]
 
   do
     local relativeTo = (display.relativeTo and _G[display.relativeTo]) or (display.parent and _G[display.parent]) or
@@ -299,23 +302,24 @@ local function initDisplay(display, group)
 end
 
 local function initGroup(group)
+  -- FIXME: Why do I even have to check for nil?  I don't think that should be the case...  fix something and remove
+  -- this code.
+  ----[[
   do
     local comparator = group.compare
     group.compare = function(aura1, aura2)
-      if aura1.name and not aura2.name then
+      if not aura1 or not aura2 then
+        return false
+      elseif aura1.name and not aura2.name then
         return true
-      elseif not aura1.name and aura2.name then
-        return false
-      elseif not aura1.name and not aura2.name then
+      elseif not aura1.name then
         return false
       end
-      local result = comparator(aura1, aura2)
-      if result then
-        return result
-      end
-      return nil -- TODO.
+      return comparator(aura1, aura2)
     end
+    -- stackoverflow.com/questions/2102710/treating-nils-in-sort-function
   end
+  --]]
   for _, display in _G.ipairs(group.displays) do
     initDisplay(display, group)
   end
@@ -356,7 +360,7 @@ local function getAuras(group)
       --local j = i + _G.math.min(aura.count or 1, maxDisplayedStacks)
       i = i + 1
       --[[
-      -- TODO: implement some sort of blacklist for auras where we don't care about stacks. The Tigereye Brew damage
+      -- TODO: implement some sort of blacklist for auras where we don't care about stacks.  The Tigereye Brew damage
       -- buff stacks up to 10 times; it could be reasonable to add an aura for every second stack.
       if aura.name ~= "Weakened Armor" and aura.name ~= "Agony" and aura.name ~= "Prayer of Mending" and
         aura.name ~= "Tiger Strikes" and aura.count <= maxDisplayedStacks
@@ -529,14 +533,13 @@ local function updateDisplay(display, group)
         end
         frame.Duration:Show()
         frame.start, frame.duration, frame.expires = start, duration, aura.expires
-        frame:SetScript("OnUpdate", NKAuraButton_OnUpdate)
+        frame:SetScript("OnUpdate", PrimalAuraButton_OnUpdate)
         if display.showCooldownSweep then
           --_G.CooldownFrame_SetTimer(frame.Cooldown, start, duration, true)
           frame.Cooldown:SetCooldown(start, duration)
         end
-      else--[[if aura.expires <= _G.GetTime() then]] -- Aura has already expired.  TODO:  display "0"?  Fade the frame?
-        frame.Cooldown:Hide()
-        frame.Duration:Hide()
+      else--[[if aura.expires <= _G.GetTime() then]] -- It already expired.  TODO: Fade the frame?  Do we even get here?
+        frame.Duration:SetText("0")
         frame:SetScript("OnUpdate", nil)
       end
 
@@ -597,7 +600,7 @@ end
 local handlerFrame = _G.CreateFrame("Frame")
 
 function addon:ADDON_LOADED(name)
-  _G.assert(_G.NinjaKittyUF)
+  _G.assert(_G.IsAddOnLoaded("PrimalUnitFrames"))
   handlerFrame:UnregisterEvent("ADDON_LOADED")
 
   for _, group in _G.ipairs(groups) do

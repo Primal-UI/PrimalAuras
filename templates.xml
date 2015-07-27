@@ -13,9 +13,11 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
 
   <FontString name="PrimalDurationFontStringLeft" inherits="PrimalDurationFontLeft" wordwrap="false" virtual="true"/>
   <FontString name="PrimalDurationFontStringRight" inherits="PrimalDurationFontRight" wordwrap="false" virtual="true"/>
-  <FontString name="PrimalDurationFontStringCenter" inherits="PrimalDurationFontCenter" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalDurationFontStringCenter" inherits="PrimalDurationFontCenter" wordwrap="false"
+    virtual="true"
+  />
 
-  <Font name="NKCountFont" font="Interface\AddOns\PrimalMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
+  <Font name="PrimalCountFont" font="Interface\AddOns\PrimalMedia\fonts\UbuntuMono-B.ttf" outline="NORMAL"
   virtual="true">
     <!--
     <Shadow>
@@ -31,13 +33,13 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
     <!-- <Color r="1" g=".4" b=".4" a="1"/> -->
   </Font>
 
-  <Font name="NKCountFontLeft" inherits="NKCountFont" justifyH="LEFT" virtual="true"/>
-  <Font name="NKCountFontRight" inherits="NKCountFont" justifyH="RIGHT" virtual="true"/>
-  <Font name="NKCountFontCenter" inherits="NKCountFont" justifyH="CENTER" virtual="true"/>
+  <Font name="PrimalCountFontLeft" inherits="PrimalCountFont" justifyH="LEFT" virtual="true"/>
+  <Font name="PrimalCountFontRight" inherits="PrimalCountFont" justifyH="RIGHT" virtual="true"/>
+  <Font name="PrimalCountFontCenter" inherits="PrimalCountFont" justifyH="CENTER" virtual="true"/>
 
-  <FontString name="NKCountFontStringLeft" inherits="NKCountFontLeft" wordwrap="false" virtual="true"/>
-  <FontString name="NKCountFontStringRight" inherits="NKCountFontRight" wordwrap="false" virtual="true"/>
-  <FontString name="NKCountFontStringCenter" inherits="NKCountFontCenter" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalCountFontStringLeft" inherits="PrimalCountFontLeft" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalCountFontStringRight" inherits="PrimalCountFontRight" wordwrap="false" virtual="true"/>
+  <FontString name="PrimalCountFontStringCenter" inherits="PrimalCountFontCenter" wordwrap="false" virtual="true"/>
 
   <Button name="NKAuraButtonTemplate" frameLevel="10" enableMouse="true" hidden="true" virtual="true">
     <Layers>
@@ -79,13 +81,13 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
         </Texture>
       </Layer>
       <Layer level="ARTWORK">
-        <FontString parentKey="Duration" inherits="PrimalDurationFontStringCenter" justifyH="CENTER" justifyV="BOTTOM">
+        <FontString parentKey="Duration" inherits="PrimalMonoCenter" justifyH="CENTER" justifyV="BOTTOM">
           <Anchors>
             <!-- <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/> -->
             <Anchor point="BOTTOM" y="1"/>
           </Anchors>
         </FontString>
-        <FontString parentKey="Count" inherits="NKCountFontStringCenter" justifyH="CENTER" justifyV="TOP">
+        <FontString parentKey="Count" inherits="PrimalMonoCenter" justifyH="CENTER" justifyV="TOP">
           <Anchors>
             <!-- <Anchor point="TOP" relativeKey="$parent.CountBackground"/> -->
             <Anchor point="TOP" y="-1"/>
