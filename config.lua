@@ -24,10 +24,13 @@ local POISON  = "Poison"
 auras.irrelevantAuras = {
   [142247] = true, -- Brawling Champion
   [2479]   = true, -- Honorless Target
-  [46705]  = true, -- Honorless Target; TODO: are both of these relevant?
+  [46705]  = true, -- Honorless Target; TODO: are both of these used?
   [72968]  = true, -- Precious's Ribbon
-  [70404]  = true, -- Precious's Ribbon; TODO: are both of thse relevant?
+  [70404]  = true, -- Precious's Ribbon; TODO: are both of these used?
   [145389] = true, -- Temporal Anomaly
+  [186404] = true, -- Sign of the Emissary
+  [186401] = true, -- Sign of the Skirmisher
+  [186406] = true, -- Sign of the Critter
 }
 
 -- These auras are already shown by other addons (for the player).  TODO: Leader of the Pack?
@@ -47,10 +50,8 @@ auras.coveredPlayerAuras = {
   [102543] = true, -- Incarnation: King of the Jungle
   [124974] = true, -- Nature's Vigil
   [69369]  = true, -- Predatory Swiftness
-  --[[
-  [5215]   = true, -- Prowl
-  [102547] = true, -- Prowl (while "Incarnation: King of the Jungle" is active)
-  ]]
+--[5215]   = true, -- Prowl
+--[102547] = true, -- Prowl (while "Incarnation: King of the Jungle" is active)
   [52610]  = true, -- Savage Roar
   [174544] = true, -- Savage Roar (from Glyph of Savage Roar)
   [58984]  = true, -- Shadowmeld
@@ -66,10 +67,6 @@ auras.coveredPlayerAuras = {
   [40120]  = true, -- Swift Flight Form
   [5217]   = true, -- Tiger's Fury
   [783]    = true, -- Travel Form
-}
-
-auras.playerBuffTooltipBlacklist = {
-  "Increases ground speed by %d%d%d?%%",
 }
 
 auras.importantOwnDebuffs = {
@@ -184,7 +181,7 @@ auras.fullCc = {
   [99]     = true, -- Incapacitating Roar
   [123393] = true, -- Breath of Fire (Glyphed)
   [88625]  = true, -- Holy Word: Chastise
-  [137143] = true, -- Blood Horror, 111397 is the ID of the spell and the buff the casting warlock gains.
+  [137143] = true, -- Blood Horror, 111397 is the ID of the spell and the buff the warlock gains.
   [64044]  = true, -- Psychic Horror
   [6789]   = true, -- Mortal Coil
   [605]    = true, -- Dominate Mind
@@ -214,6 +211,9 @@ auras.fullCc = {
   [31935]   = true, -- Avenger's Shield
   [15487]   = true, -- Silence (Priest)
   [1330]    = true, -- Garrote - Silence
+  [31117]   = true, -- Unstable Affliction; TODO: confirm spell ID
+  [65813]   = true, -- Unstable Affliction; TODO: probably wrong spell ID
+  [43523]   = true, -- Unstable Affliction; TODO: probably wrong spell ID
   [28730]   = true, -- Arcane Torrent (Blood Elf Racial, classes with mana?)
   [25046]   = true, -- Arcane Torrent (Blood Elf Racial, Rogue)
   [69179]   = true, -- Arcane Torrent (Blood Elf Racial, Warrior)
@@ -226,12 +226,17 @@ auras.fullCc = {
   [87204]  = true, -- Sin and Punishment; TODO: still exists?
 }
 
+auras.otherDebuffs = {
+  [79140] = true, -- Vendetta; TODO: confirm spell ID
+--[79140] = true, -- A Murder of Crows; TODO
+--[79140] = true, -- Devouring Plague; TODO
+}
+
 auras.immunities = {
-  [110909] = true, -- Alter Time (actual buff)
+  [110909] = true, -- Alter Time
   [48707]  = true, -- Anti-Magic Shell
-  [172106] = true, -- Aspect of the Fox
   [46924]  = true, -- Bladestorm
-  [170847] = true, -- Celestial Protection.  Druid WoD PvP Balance 4P Bonus (aura mastery).  TODO: cofirm spell ID.
+  [170847] = true, -- Celestial Protection; Druid WoD PvP Balance 4P Bonus (aura mastery); TODO: cofirm spell ID
   [31224]  = true, -- Cloak of Shadows
   [110913] = true, -- Dark Bargain
   [122465] = true, -- Dematerialize
@@ -241,8 +246,8 @@ auras.immunities = {
   [110618] = true, -- Deterrence (?)
   [114406] = true, -- Deterrence (?)
   [148467] = true, -- Deterrence (?)
-  [115018] = true, -- Desecrated Ground (spell ID is tested)
-  [152150] = true, -- Death from Above.  Spell ID confirmed.
+  [115018] = true, -- Desecrated Ground
+  [152150] = true, -- Death from Above
   [47585]  = true, -- Dispersion
   [642]    = true, -- Divine Shield
   [31821]  = true, -- Devotion Aura.  TODO: confirm spell ID.
@@ -251,8 +256,8 @@ auras.immunities = {
   [115760] = true, -- Glyph of Ice Block
                    -- Greater Invisibility: TODO.
   [8178]   = true, -- Grounding Totem Effect
-  [89523]  = true, -- Grounding Totem (with reflect glyph).  TODO: confirm spell ID.
-  [1044]   = true, -- Hand of Freedom.  TODO: confirm spell ID.
+  [89523]  = true, -- Grounding Totem (with reflect glyph); TODO: confirm spell ID
+  [1044]   = true, -- Hand of Freedom; TODO: confirm spell ID
   [1022]   = true, -- Hand of Protection
   [152175] = true, -- Hurricane Strike
   [45438]  = true, -- Ice Block
@@ -260,7 +265,7 @@ auras.immunities = {
   [3411]   = true, -- Intervene
   [147833] = true, -- Intervene; TODO: remove incorrect spell ID, confirm spell ID.
   [32612]  = true, -- Invisibility; Seems to be correct spell ID.  66 is the ID of the spell.
-  [51690]  = true, -- Killing Spree; TODO: confirm spell ID.
+  [51690]  = true, -- Killing Spree
   [114028] = true, -- Mass Spell Reflection
   [54216]  = true, -- Master's Call; TODO: remove one of these?
   [62305]  = true, -- Master's Call; TODO: remove one of these?
@@ -270,12 +275,12 @@ auras.immunities = {
   [114029] = true, -- Safeguard
   [112833] = true, -- Spectral Guise
   [23920]  = true, -- Spell Reflection
-  [131558] = true, -- Spiritwalker's Aegis.  TODO: confirm spell ID.
-  [79206]  = true, -- Spiritwalker's Grace.  TODO: confirm spell ID.
-                   -- TODO: Tremor Totem.  Does this even apply an aura?
+  [131558] = true, -- Spiritwalker's Aegis; TODO: confirm spell ID
+  [79206]  = true, -- Spiritwalker's Grace; TODO: confirm spell ID
+                   -- TODO: Tremor Totem; does this even apply an aura?
   [114896] = true, -- Windwalk Totem
-  [124488] = true, -- Zen Focus.  FIXME: this is probably the wrong spell ID.
-  [159546] = true, -- Glyph of Zen Focus.  TODO: confirm spell ID.
+  [124488] = true, -- Zen Focus; FIXME: this is probably the wrong spell ID
+  [159546] = true, -- Glyph of Zen Focus; TODO: confirm spell ID
   [115176] = true, -- Zen Meditation
 }
 
@@ -287,46 +292,54 @@ auras.defensive = {
   [5277]   = true, -- Evasion
   [1966]   = true, -- Feint
   [47788]  = true, -- Guardian Spirit
-  [6940]   = true, -- Hand of Sacrifice.  TODO: confirm spell ID.
+  [6940]   = true, -- Hand of Sacrifice; TODO: confirm spell ID
   [102342] = true, -- Ironbark
   [12975]  = true, -- Last Stand
   [116849] = true, -- Life Cocoon
   [33206]  = true, -- Pain Suppression
-  [97463]  = true, -- Rallying Cry.  97462 is the actual spell.
+  [97463]  = true, -- Rallying Cry
   [53480]  = true, -- Roar of Sacrifice
+  [46947]  = true, -- Safeguard (damage reduction); TODO: confirm spell ID
   [30823]  = true, -- Shamanistic Rage
   [61336]  = true, -- Survival Instincts
   [871]    = true, -- Shield Wall
   [125174] = true, -- Touch of Karma (Buff)
+  [114030] = true, -- Vigilance; TODO: confirm spell ID
 }
 
 auras.offensive = {
+  [13750]  = true, -- Adrenaline Rush; TODO: confirm spell ID
   [106951] = true, -- Berserk (Cat Form)
-  [84745]  = true, -- Shallow Insight
-  [84746]  = true, -- Moderate Insight
+  [112071] = true, -- Celestial Alignment
+  [113860] = true, -- Dark Soul: Misery; Affliction; TODO: confirm spell ID
+  [113858] = true, -- Dark Soul: Instability; Destruction; TODO: confirm spell ID
+  [113861] = true, -- Dark Soul: Knowledge; Demonology; TODO: confirm spell ID
   [84747]  = true, -- Deep Insight
+  [82692]  = true, -- Focus Fire; TODO: confirm spell ID
+  [102543] = true, -- Incarnation: King of the Jungle
+  [84746]  = true, -- Moderate Insight
+  [51713]  = true, -- Shadow Dance; TODO: confirm spell ID
+  [84745]  = true, -- Shallow Insight
 }
 
-auras.utility --[[ Is auras.other more fitting? ]] = {
+auras.utility = {
+  -- ...
+}
+
+auras.other = {
   [31842]  = true, -- Avenging Wrath
+  [111397] = true, -- Blood Horror, TODO: confirm spell ID
   [74001]  = true, -- Combat Readiness
-  [112071] = true, -- Celestial Alignment
   [770]    = true, -- Faerie Fire; should this be classified as CC?
   [102355] = true, -- Faerie Swarm; should this be classified as CC?
   [25771]  = true, -- Forbearance, TODO: confirm spell ID
   [41425]  = true, -- Hypothermia, TODO: confirm spell ID
   [54149]  = true, -- Infusion of Light, TODO: confirm spell ID
-  [102543] = true, -- Incarnation: King of the Jungle
-  [132158] = true, -- Nature's Swiftness, TODO: confirm spell ID
---[69369]  = true, -- Predatory Swiftness
+  [132158] = true, -- Nature's Swiftness
   [115000] = true, -- Remorseless Winter
   [155274] = true, -- Saving Grace
   [114108] = true, -- Soul of the Forest (Restoration Druid Buff)
   [73685]  = true, -- Unleash Life
-}
-
--- TODO.
-auras.other = {
   [23335]  = true, -- Alliance Flag
   [140876] = true, -- Alliance Mine Cart
   [23333]  = true, -- Horde Flag
@@ -334,20 +347,24 @@ auras.other = {
   [34976]  = true, -- Netherstorm Flag
 }
 
--- TODO: Use spell IDs!
+auras.playerBuffTooltipBlacklist = {
+  "Increases ground speed by %d%d%d?%%",
+}
+
+local function shouldConsolidate(aura)
+  aura.shouldConsolidate = 1
+end
+
 mutators.generalBuffMutators = {
-  ["Inner Fire"] = function(aura)
-    aura.shouldConsolidate = 1
-  end,
-  ["Inner Will"] = function(aura)
-    aura.shouldConsolidate = 1
-  end,
-  [128943] = function(aura) -- Cyclonic Inspiration (Shrine of Seven Stars)
-    aura.shouldConsolidate = 1
-  end,
-  [131526] = function(aura) -- Cyclonic Inspiration (Shrine of Two Moons)
-    aura.shouldConsolidate = 1
-  end,
+  [110310] = shouldConsolidate, -- Dampening; doesn't work because it's a debuff: TODO
+  [128943] = shouldConsolidate, -- Cyclonic Inspiration (Shrine of Seven Stars)
+  [131526] = shouldConsolidate, -- Cyclonic Inspiration (Shrine of Two Moons)
+  [181201] = shouldConsolidate, -- Gladiator's Distinction
+  [81744]  = shouldConsolidate, -- Horde; applied when playing an RBG on Horde side as Alliance
+  [77769]  = shouldConsolidate, -- Trap Launcher; TODO: confirm ID
+  [118694] = shouldConsolidate, -- Spirit Bond; TODO: confirm ID
+  [189325] = shouldConsolidate, -- King of the Jungle
+  [190632] = shouldConsolidate, -- Trailblazer
 }
 
 -- TODO: Use spell IDs.
@@ -447,7 +464,7 @@ end
 comparators.drFirst = function(aura1, aura2)
   if aura1.filter == "DR" and aura2.filter ~= "DR" then
     return true
-  elseif aura1.filter == "DR" and aura2.filter ~= "DR" then
+  elseif aura1.filter ~= "DR" and aura2.filter == "DR" then
     return false
   end
   return comparators.buffsFirst(aura1, aura2)
@@ -518,7 +535,8 @@ _G.table.insert(groups, {
       whitelist = function(aura)
         return auras.immunities[aura.spellId] or auras.defensive[aura.spellId] or aura.name == "Soul Reaper"
           or aura.name == "Dark Simulacrum" or aura.name == "Devouring Plague" or aura.spellId == 6346 --[[Fear Ward]]
-          or aura.spellId == 115000 --[[Remorseless Winter]]
+          or aura.spellId == 115000 --[[Remorseless Winter (shift at 4 stacks)]] or aura.spellId == 770
+          or aura.spellId == 102355 --[[Faerie Fire and Faerie Swarm]]
       end,
       borderColor = borderColor,
     },
@@ -605,7 +623,7 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
           aura.dispelType == ENRAGE
       end,
       borderColor = borderColor,
@@ -693,7 +711,7 @@ _G.table.insert(groups, {
       numCols = 7,
       orientation = "HORIZONTAL",
       whitelist = function(aura)
-        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
           aura.dispelType == ENRAGE
       end,
       borderColor = borderColor,
@@ -797,9 +815,9 @@ for i = 1, 4 do
         numCols = 7,
         orientation = "HORIZONTAL",
         blacklist = function(aura)
-          return (aura.filter == "HELPFUL" and (aura.duration >= 300 or aura.shouldConsolidate or
-            aura.caster ~= "player")) or (aura.filter == "HARMFUL" and aura.dispelType ~= CURSE and
-            aura.dispelType ~= POISON and aura.name ~= "Stats missing")
+          return not auras.otherDebuffs[aura.spellId] and ((aura.filter == "HELPFUL" and (aura.duration >= 300 or
+            aura.shouldConsolidate or aura.caster ~= "player")) or (aura.filter == "HARMFUL" and
+            aura.dispelType ~= CURSE and aura.dispelType ~= POISON and aura.name ~= "Stats missing"))
         end,
         borderColor = borderColor,
       },
@@ -828,7 +846,7 @@ for i = 1, 3 do -- Define groups for arena opponents.
         numCols = 7,
         orientation = "HORIZONTAL",
         whitelist = function(aura)
-          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.utility[aura.spellId] or
+          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
             aura.dispelType == ENRAGE
         end,
         borderColor = borderColor,

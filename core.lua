@@ -63,19 +63,35 @@ end
 local expireAura
 
 local function PrimalAuraButton_OnUpdate(self, elapsed)
-  local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
+  --local seconds = _G.math.floor(self.expires - _G.GetTime() + .5)
+  local seconds = self.expires - _G.GetTime()
   if seconds < 0 then
-    --self.Duration:Hide()
     self:SetScript("OnUpdate", nil)
     if self.auraFilter == "DR" then
       expireAura(self)
+    else
+      self.Duration:SetText("0")
+      --[[
+      if seconds < -.01 then
+        --local group = frame:GetParent().group
+        --if not _G.UnitExists(group.unit) then
+        -- Normally we don't get here because the frame is hidden before the aura reaches a negative remaining duration.
+        -- We don't hide auras just because they should have expired.  We wait for UNIT_AURA.  Sometimes auras are still
+        -- active when they should have expired.
+        print("PrimalAuraButton_OnUpdate", self:GetName())
+        -- Explicitly darken the aura if we didn't show the cooldown sweep animation.  TODO: is this the best way to do
+        -- this?
+        self.Cooldown:SetCooldown(_G.GetTime() - 1, 1)
+        --end
+      end
+      ]]
     end
     return
   elseif seconds > 99 then
     if self.Duration:IsShown() then self.Duration:Hide() end
     return
   else
-    self.Duration:SetText(_G.tostring(seconds))
+    self.Duration:SetText(_G.tostring(_G.math.floor(seconds + .5)))
   end
 end
 
@@ -99,10 +115,10 @@ do
   f:SetScript("OnUpdate", updateTimers)
 end
 
--- Remove the aura and shift the display's remaining auras.  Used for DR.  TODO.
+-- Remove the aura and shift the display's remaining auras.  Used for DR.
 function expireAura(frame)
-  local display   = frame:GetParent().display
-  local i         = _G.string.match(frame:GetName(), "%d+") + 1
+  local display = frame:GetParent().display
+  local i = _G.string.match(frame:GetName(), "%d+") + 1
   local nextFrame = display.frames[i]
 
   -- TODO: move the code to copy an aura frame into a dedicated function.
@@ -159,6 +175,7 @@ local function initDisplay(display, group)
   display.wrapperFrame:SetFrameLevel(10)
 
   display.wrapperFrame.display = display
+  display.wrapperFrame.group = group
 
   -- When the display is implicitly hidden due to a parent frame being hidden, hide it explicitly.  Otherwise it will be
   -- shown again when the parent frame becomes visible, even thought we didn't update it.  Isn't that fine?
@@ -234,7 +251,7 @@ local function initDisplay(display, group)
       --[[
       frame:SetScript("OnShow", function(self)
         if not (frame.Cooldown:IsShown() and frame.Cooldown:GetCooldownDuration()) then
-          _G.print(frame.start, frame.duration)
+          print(frame.start, frame.duration)
           frame.Cooldown:SetCooldown(frame.start, frame.duration)
         end
       end)
@@ -573,10 +590,21 @@ local function updateDisplay(display, group)
 
   while frame and frame:IsShown() do
     --frame.Icon:SetTexture(nil)
-    --_G.CooldownFrame_SetTimer(frame.Cooldown) -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
+    --_G.CooldownFrame_SetTimer(frame.Cooldown) -- wowprogramming.com/utils/xmlbrowser/test/FrameXML/Cooldown.lua
     frame:Hide()
     frameIndex = frameIndex + 1
     frame = display.frames[frameIndex]
+  end
+end
+
+local function resetDisplay(display)
+  for i, frame in _G.ipairs(display.frames) do
+    if frame:IsShown() then
+      --print("Hiding " .. frame:GetName())
+      frame:Hide()
+    else
+      break
+    end
   end
 end
 
@@ -586,10 +614,12 @@ local function updateGroups(unitId)
   else
     for _, group in _G.ipairs(groups) do
       if not unitId or group.unit == unitId then
-        getAuras(group) -- Initialize the auras table and the numAuras variable.
-        for _, display in _G.ipairs(group.displays) do
-          --display.wrapperFrame:Show()
-          updateDisplay(display, group)
+        if _G.UnitExists(group.unit) then
+          getAuras(group) -- Initialize the auras table and the numAuras variable.
+          for _, display in _G.ipairs(group.displays) do
+            --display.wrapperFrame:Show()
+            updateDisplay(display, group)
+          end
         end
       end
     end
@@ -611,6 +641,8 @@ function addon:ADDON_LOADED(name)
   handlerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
   --handlerFrame:RegisterEvent("PLAYER_ALIVE")
 
+  handlerFrame:RegisterEvent("ARENA_PREP_OPPONENT_SPECIALIZATIONS")
+
   handlerFrame:RegisterEvent("UNIT_AURA")
   handlerFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
   handlerFrame:RegisterEvent("UNIT_CONNECTION")
@@ -626,16 +658,30 @@ function addon:ADDON_LOADED(name)
   handlerFrame.ADDON_LOADED = nil
 end
 
+--[[
 function addon:PLAYER_LOGIN()
   updateGroups()
 end
+]]
 
 function addon:PLAYER_ENTERING_WORLD()
   updateGroups()
 end
 
+-- Hide auras of arena opponents from the previous match.
+function addon:ARENA_PREP_OPPONENT_SPECIALIZATIONS()
+  --print("ARENA_PREP_OPPONENT_SPECIALIZATIONS")
+  for _, group in _G.ipairs(groups) do
+    if _G.string.match(group.unit, "arena") then
+      for _, display in _G.ipairs(group.displays) do
+        resetDisplay(display)
+      end
+    end
+  end
+end
+
 function addon:UNIT_AURA(unitId) -- http://wowprogramming.com/docs/events/UNIT_AURA
-  --_G.print(_G.GetTime(), "UNIT_AURA", unitId)
+  --print(_G.GetTime(), "UNIT_AURA", unitId)
   updateGroups(unitId)
 end
 
@@ -744,9 +790,11 @@ function addon:GROUP_ROSTER_UPDATE()
   end
 end
 
-function addon:ARENA_OPPONENT_UPDATE() -- TODO?
+--[[
+function addon:ARENA_OPPONENT_UPDATE()
   -- ...
 end
+]]
 
 handlerFrame:SetScript("OnEvent", function(self, event, ...)
   return addon[event](addon, ...)
