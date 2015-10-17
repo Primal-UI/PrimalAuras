@@ -1,5 +1,5 @@
--- TODO: Add these auras: Orb of Power (?), 118358 (Drink).  Only show Smoke Bomb if it's casted by a hostile Rogue?
--- Show Faerie Fire and Faerie Swarm as CC?
+-- TODO: Add these auras: Orb of Power.  Only show Smoke Bomb if it's casted by a hostile Rogue?  Show Faerie Fire and
+-- Faerie Swarm as CC?
 
 local addonName, addon = ...
 setfenv(1, addon)
@@ -28,12 +28,13 @@ auras.irrelevantAuras = {
   [72968]  = true, -- Precious's Ribbon
   [70404]  = true, -- Precious's Ribbon; TODO: are both of these used?
   [145389] = true, -- Temporal Anomaly
+  [186400] = true, -- Sign of Apexis
   [186404] = true, -- Sign of the Emissary
   [186401] = true, -- Sign of the Skirmisher
   [186406] = true, -- Sign of the Critter
 }
 
--- These auras are already shown by other addons (for the player).  TODO: Leader of the Pack?
+-- These auras are already shown by other addons (for the player), or it's obvious if they are up (e.g. Leader of the Pack).
 auras.coveredPlayerAuras = {
   [1066]   = true, -- Aquatic Form
   [22812]  = true, -- Barkskin
@@ -44,10 +45,13 @@ auras.coveredPlayerAuras = {
   [126690] = true, -- Call of Conquest
   [768]    = true, -- Cat Form
   [171745] = true, -- Claws of Shirvallah
-  [135700] = true, -- Clearcasting
+  [135700] = true, -- Clearcasting (Feral)
+  [16870]  = true, -- Clearcasting (Restoration)
   [1850]   = true, -- Dash
-  [108292] = true, -- Heart of the Wild (Feral)
+  [108292] = true, -- Heart of the Wild; Feral
+  [108294] = true, -- Heart of the Wild; Restoration
   [102543] = true, -- Incarnation: King of the Jungle
+  [24932]  = true, -- Leader of the Pack
   [124974] = true, -- Nature's Vigil
   [69369]  = true, -- Predatory Swiftness
 --[5215]   = true, -- Prowl
@@ -74,41 +78,57 @@ auras.importantOwnDebuffs = {
   [1079]   = true, -- Rip
 }
 
+auras.ownBuffs = {
+--[137452] = true, -- Displacer Beast
+  [102351] = true, -- Cenarion Ward; initial buff
+  [102352] = true, -- Cenarion Ward; actual healing
+  [162359] = true, -- Genesis
+  [100977] = true, -- Harmony
+  [33763]  = true, -- Lifebloom
+  [132158] = true, -- Nature's Swiftness; this should be in coveredPlayerAuras
+  [54861]  = true, -- Nitro Boosts
+  [8936]   = true, -- Regrowth
+  [774]    = true, -- Rejuvenation
+  [155777] = true, -- Rejuvenation (Germination)
+  [114108] = true, -- Soul of the Forest
+  [102416] = true, -- Wild Charge (when used in Aquatic Form)
+  [48438]  = true, -- Wild Growth
+}
+
 auras.roots = {
   [96294]  = true, -- Chains of Ice
   [339]    = true, -- Entangling Roots
   [170855] = true, -- Entangling Roots (Nature's Grasp).  Nature's Grasp is 170856.
   [113770] = true, -- Entangling Roots (Force of Nature).  This spell ID is correct for Feral; TODO: also for Balance?
   [102359] = true, -- Mass Entanglement
-  [136634] = true, -- Narrow Escape.  TODO: confirm spell ID.
-  [33395]  = true, -- Freeze (Water Elemental).  TODO: confirm spell ID.
-  [102051] = true, -- Frostjaw (Silence and Root).  TODO: confirm spell ID.
-  [122]    = true, -- Frost Nova.  TODO: confirm spell ID.
-  [116706] = true, -- Disable.  TODO: confirm spell ID.
-  [87194]  = true, -- Glyph of Mind Blast.  TODO: confirm spell ID.
-  [114404] = true, -- Void Tendril's Grasp.  TODO: confirm spell ID.
-  [115197] = true, -- Partial Paralysis.  TODO: confirm spell ID.
-  [63685]  = true, -- Freeze (Frost Shock with Frozen Power talent).  TODO: confirm spell ID.
-  [107566] = true, -- Staggering Shout.  TODO: confirm spell ID.
-  [105771] = true, -- Warbringer (Charge).  TODO: confirm spell ID.
-  [91807]  = true, -- Shambling Rush (Ghoul with Dark Transformation; Unholy Death Knight).  Spell ID confirmed.
-  [45334]  = true, -- Immobilized (Bear Form Wild Charge)
-  [64803]  = true, -- Entrapment.  TODO: confirm spell ID.  I think this isn't the correct ID.
-  [135373] = true, -- Entrapment.  TODO: confirm spell ID.  I think this is the correct ID.
-  [111340] = true, -- Ice Ward.  TODO: confirm spell ID.
-  [123407] = true, -- Spinning Fire Blossom.  TODO: confirm spell ID.
-  [64695]  = true, -- Earthgrab.  TODO: confirm spell ID.
+  [136634] = true, -- Narrow Escape; TODO: confirm spell ID
+  [33395]  = true, -- Freeze (Water Elemental); TODO: confirm spell ID
+  [102051] = true, -- Frostjaw (Silence and Root); TODO: confirm spell ID
+  [122]    = true, -- Frost Nova; TODO: confirm spell ID
+  [116706] = true, -- Disable; TODO: confirm spell ID
+  [87194]  = true, -- Glyph of Mind Blast; TODO: confirm spell ID
+  [114404] = true, -- Void Tendril's Grasp; TODO: confirm spell ID
+  [115197] = true, -- Partial Paralysis; TODO: confirm spell ID
+  [63685]  = true, -- Freeze; Frost Shock with Frozen Power talent, TODO: confirm spell ID
+  [107566] = true, -- Staggering Shout; TODO: confirm spell ID
+  [105771] = true, -- Warbringer (Charge); TODO: confirm spell ID
+  [91807]  = true, -- Shambling Rush; Ghoul with Dark Transformation (Unholy Death Knight)
+  [45334]  = true, -- Immobilized; Bear Form Wild Charge
+  [64803]  = true, -- Entrapment; TODO: confirm spell ID, I think this isn't the correct ID
+  [135373] = true, -- Entrapment; TODO: confirm spell ID, I think this is the correct ID
+  [111340] = true, -- Ice Ward; TODO: confirm spell ID
+  [123407] = true, -- Spinning Fire Blossom; TODO: confirm spell ID
+  [64695]  = true, -- Earthgrab; TODO: confirm spell ID
   -- TODO: Are the following pet skills still in the game?
-  [53148]  = true, -- Charge (Tenacity pet).  TODO: confirm spell ID.
-  [50245]  = true, -- Pin (Crab pet).  TODO: confirm spell ID.
-  [90327]  = true, -- Lock Jaw (Dog pet).  TODO: confirm spell ID.
-  [4167]   = true, -- Web (Spider pet).  TODO: confirm spell ID.
-  [54706]  = true, -- Venom Web Spray (Silithid pet).  TODO: confirm spell ID.
+  [53148]  = true, -- Charge (Tenacity pet); TODO: confirm spell ID
+  [50245]  = true, -- Pin (Crab pet); TODO: confirm spell ID
+  [90327]  = true, -- Lock Jaw (Dog pet); TODO: confirm spell ID
+  [4167]   = true, -- Web (Spider pet); TODO: confirm spell ID
+  [54706]  = true, -- Venom Web Spray (Silithid pet); TODO: confirm spell ID
 }
 
 -- Full Crowd Control and Silences.  Based on http://us.battle.net/wow/en/forum/topic/10195910192,
--- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius.  TODO: sort these
--- into the actual remaining categories.
+-- http://www.arenajunkies.com/topic/227748-mop-diminishing-returns-updating-the-list and Gladius.
 auras.fullCc = {
   -- *Stuns* --
   [108194] = true, -- Asphyxiate
@@ -122,7 +142,7 @@ auras.fullCc = {
   [117526] = true, -- Binding Shot
   [24394]  = true, -- Intimidation
   [157997] = true, -- Ice Nova
-  --[118271] = true, -- Combustion Impact
+--[118271] = true, -- Combustion Impact
   [44572]  = true, -- Deep Freeze
   [123687] = true, -- Charging Ox Wave.  Confirmed ID.
   [122242] = true, -- Clash
@@ -139,19 +159,19 @@ auras.fullCc = {
   [30283]  = true, -- Shadowfury
   [22703]  = true, -- Infernal Awakening (Summon Infernal stun)
   [46968]  = true, -- Shockwave
-  [132168] = true, -- Shockwave -- TODO: Which  is the real Showckwave?
+  [132168] = true, -- Shockwave -- TODO: which one?
   [107570] = true, -- Storm Bolt
-  [132169] = true, -- Storm Bolt -- TODO: Which  is the real Storm Bolt?
+  [132169] = true, -- Storm Bolt -- TODO: which one?
   [20549]  = true, -- War Stomp (Tauren Racial)
   ---------------------
   -- *Stuns (off DR?)* --
   --[113953] = true, -- Paralysis (Paralytic Poison stun)
   [7922]   = true, -- Charge Stun -- This spell ID appears to be correct (96273 isn't).
-  [77505]  = true, -- Earthquake -- TODO: is this the correct ID?
-  [118895] = true, -- Dragon Roar -- TODO: is this the correct ID?
+  [77505]  = true, -- Earthquake -- TODO: confirm spell ID?
+  [118895] = true, -- Dragon Roar -- TODO: confirm spell ID?
   ---------------------
   -- *Incapacitates* --
-  [55041]  = true, -- Freezing Trap Effect -- TODO: Which one do we need?
+  [55041]  = true, -- Freezing Trap Effect -- TODO: which one?
   [1499]   = true, -- Freezing Trap Effect
   [3355]   = true, -- Freezing Trap (Trap Launcher)
   [60192]  = true, -- Freezing Trap (Trap Launcher)
@@ -192,12 +212,12 @@ auras.fullCc = {
   [105421] = true, -- Blinding Light; TODO: confirm spell ID.
   [33786]  = true, -- Cyclone
   [10326]  = true, -- Turn Evil
-  [145067] = true, -- Turn Evil (glyphed?); TODO; removed?
+  [145067] = true, -- Turn Evil (glyphed?); TODO: removed?
   [8122]   = true, -- Psychic Scream
   [2094]   = true, -- Blind
   [5782]   = true, -- Fear; TODO: unused?
   [118699] = true, -- Fear
-  [130616] = true, -- Fear (glyphed?)
+  [130616] = true, -- Fear; glyphed?
   [5484]   = true, -- Howl of Terror
   [115268] = true, -- Mesmerize (Shivarra)
   [6358]   = true, -- Seduction (Succubus)
@@ -206,7 +226,7 @@ auras.fullCc = {
   -- *Silences* -- -- TODO: is there a silcence separate from the stun for Asphyxiate?
   [47476]   = true, -- Strangulate
   [114237]  = true, -- Glyph of Fae Silence
-  [78675]   = true, -- Solar Beam
+  [81261]   = true, -- Solar Beam
   [102051]  = true, -- Frostjaw (Silence and Root)
   [31935]   = true, -- Avenger's Shield
   [15487]   = true, -- Silence (Priest)
@@ -227,9 +247,10 @@ auras.fullCc = {
 }
 
 auras.otherDebuffs = {
-  [79140] = true, -- Vendetta; TODO: confirm spell ID
---[79140] = true, -- A Murder of Crows; TODO
---[79140] = true, -- Devouring Plague; TODO
+  [131894] = true, -- A Murder of Crows; TODO confirm spell ID
+  [158831] = true, -- Devouring Plague; TODO confirm spell ID
+  [155274] = true, -- Saving Grace
+  [79140]  = true, -- Vendetta; TODO: confirm spell ID
 }
 
 auras.immunities = {
@@ -240,21 +261,18 @@ auras.immunities = {
   [31224]  = true, -- Cloak of Shadows
   [110913] = true, -- Dark Bargain
   [122465] = true, -- Dematerialize
-  [19263]  = true, -- Deterrence
-  [67801]  = true, -- Deterrence (?)
-  [110617] = true, -- Deterrence (?)
-  [110618] = true, -- Deterrence (?)
-  [114406] = true, -- Deterrence (?)
-  [148467] = true, -- Deterrence (?)
+  [19263]  = true, -- Deterrence; TODO: this one I think?
+--[148467] = true, -- Deterrence: TODO: most likely not this one
   [115018] = true, -- Desecrated Ground
   [152150] = true, -- Death from Above
   [47585]  = true, -- Dispersion
   [642]    = true, -- Divine Shield
-  [31821]  = true, -- Devotion Aura.  TODO: confirm spell ID.
+  [31821]  = true, -- Devotion Aura
   [6346]   = true, -- Fear Ward
   [159438] = true, -- Glyph of Enchanted Bark
   [115760] = true, -- Glyph of Ice Block
                    -- Greater Invisibility: TODO.
+  [159652] = true, -- Glyph of Spiritwalker's Aegis
   [8178]   = true, -- Grounding Totem Effect
   [89523]  = true, -- Grounding Totem (with reflect glyph); TODO: confirm spell ID
   [1044]   = true, -- Hand of Freedom; TODO: confirm spell ID
@@ -265,21 +283,24 @@ auras.immunities = {
   [3411]   = true, -- Intervene
   [147833] = true, -- Intervene; TODO: remove incorrect spell ID, confirm spell ID.
   [32612]  = true, -- Invisibility; Seems to be correct spell ID.  66 is the ID of the spell.
-  [51690]  = true, -- Killing Spree
   [114028] = true, -- Mass Spell Reflection
   [54216]  = true, -- Master's Call; TODO: remove one of these?
   [62305]  = true, -- Master's Call; TODO: remove one of these?
   [137562] = true, -- Nimble Brew
+  [51271]  = true, -- Pillar of Frost; Frost Death Knight immunity to knockbacks; TODO: confirm spell ID
+  [90259]  = true, -- Pillar of Frost; Glyphed, full CC immunity; TODO: confirm spell ID
   [159630] = true, -- Shadow Magic.
-                   -- Shroud of Concealment: TODO?
+  [88611]  = true, -- Smoke Bomb; TODO: confirm spell ID (and maybe move it to another group?)
+  [114018] = true, -- Shroud of Concealment; TODO: maybe move to another group and remove one of these
+  [115834] = true, -- Shroud of Concealment; TODO: maybe move to another group and remove one of these
   [114029] = true, -- Safeguard
   [112833] = true, -- Spectral Guise
   [23920]  = true, -- Spell Reflection
-  [131558] = true, -- Spiritwalker's Aegis; TODO: confirm spell ID
-  [79206]  = true, -- Spiritwalker's Grace; TODO: confirm spell ID
+--[131558] = true, -- Spiritwalker's Aegis; I think this isn't used
                    -- TODO: Tremor Totem; does this even apply an aura?
+  [104773] = true, -- Unending Resolve; TODO: confirm spell ID
   [114896] = true, -- Windwalk Totem
-  [124488] = true, -- Zen Focus; FIXME: this is probably the wrong spell ID
+--[124488] = true, -- Zen Focus; FIXME: this is probably the wrong spell ID
   [159546] = true, -- Glyph of Zen Focus; TODO: confirm spell ID
   [115176] = true, -- Zen Meditation
 }
@@ -303,22 +324,31 @@ auras.defensive = {
   [30823]  = true, -- Shamanistic Rage
   [61336]  = true, -- Survival Instincts
   [871]    = true, -- Shield Wall
-  [125174] = true, -- Touch of Karma (Buff)
+  [125174] = true, -- Touch of Karma (buff on caster)
   [114030] = true, -- Vigilance; TODO: confirm spell ID
 }
 
 auras.offensive = {
   [13750]  = true, -- Adrenaline Rush; TODO: confirm spell ID
+  [114050] = true, -- Ascendance (Elemental); TODO: confirm spell ID
+  [114051] = true, -- Ascendance (Enhancement); TODO: confirm spell ID
+  [31884]  = true, -- Avenging Wrath; Retribution, TODO: confirm spell ID
   [106951] = true, -- Berserk (Cat Form)
   [112071] = true, -- Celestial Alignment
-  [113860] = true, -- Dark Soul: Misery; Affliction; TODO: confirm spell ID
+  [113860] = true, -- Dark Soul: Misery; Affliction
   [113858] = true, -- Dark Soul: Instability; Destruction; TODO: confirm spell ID
   [113861] = true, -- Dark Soul: Knowledge; Demonology; TODO: confirm spell ID
   [84747]  = true, -- Deep Insight
   [82692]  = true, -- Focus Fire; TODO: confirm spell ID
+  [12472]  = true, -- Icy Veins; TODO: confirm spell ID
+  [102560] = true, -- Incarnation: Chosen of Elune
   [102543] = true, -- Incarnation: King of the Jungle
+--[33891]  = true, -- Incarnation: Tree of Life; this is the shapeshift form and is not on a timer
+  [117679] = true, -- Incarnation; Restoration
+  [51690]  = true, -- Killing Spree
   [84746]  = true, -- Moderate Insight
-  [51713]  = true, -- Shadow Dance; TODO: confirm spell ID
+  [51713]  = true, -- Shadow Dance
+  [152151] = true, -- Shadow Reflection; TODO: confirm spell ID
   [84745]  = true, -- Shallow Insight
 }
 
@@ -326,19 +356,24 @@ auras.utility = {
   -- ...
 }
 
+-- TODO: split this into buffs and debuffs?
 auras.other = {
-  [31842]  = true, -- Avenging Wrath
-  [111397] = true, -- Blood Horror, TODO: confirm spell ID
+  [114052] = true, -- Ascendance; Restoration
+  [31842]  = true, -- Avenging Wrath; Holy
+  [111397] = true, -- Blood Horror
   [74001]  = true, -- Combat Readiness
+  [118358] = true, -- Drink, TODO: confirm spell ID
   [770]    = true, -- Faerie Fire; should this be classified as CC?
   [102355] = true, -- Faerie Swarm; should this be classified as CC?
-  [25771]  = true, -- Forbearance, TODO: confirm spell ID
+  [25771]  = true, -- Forbearance
   [41425]  = true, -- Hypothermia, TODO: confirm spell ID
-  [54149]  = true, -- Infusion of Light, TODO: confirm spell ID
+  [54149]  = true, -- Infusion of Light
   [132158] = true, -- Nature's Swiftness
   [115000] = true, -- Remorseless Winter
   [155274] = true, -- Saving Grace
-  [114108] = true, -- Soul of the Forest (Restoration Druid Buff)
+  [114108] = true, -- Soul of the Forest
+  [114908] = true, -- Spirit Shell; TODO: confirm spell ID
+  [79206]  = true, -- Spiritwalker's Grace
   [73685]  = true, -- Unleash Life
   [23335]  = true, -- Alliance Flag
   [140876] = true, -- Alliance Mine Cart
@@ -519,7 +554,7 @@ _G.table.insert(groups, {
       borderColor = borderColor,
     },
     {
-      name = "NKAPrimaryPlayerAuras",
+      name = "PrimaryPlayerAuras",
       parent = "NKPlayerFrame",
       anchorPoint = "TOPLEFT",
       relativePoint = "TOPRIGHT",
@@ -540,8 +575,30 @@ _G.table.insert(groups, {
       end,
       borderColor = borderColor,
     },
+    --[[
     { -- TODO: filter auras that are also returned for the vehicle unit?
-      name = "NKASecondaryPlayerAuras",
+      name = "SecondaryPlayerAuras1",
+      parent = "NKPlayerFrame",
+      anchorPoint = "TOPRIGHT",
+      relativePoint = "BOTTOMRIGHT",
+      xOffset = 0,
+      yOffset = -2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 7,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return not auras.irrelevantAuras[aura.spellId] and not auras.coveredPlayerAuras[aura.spellId] and
+          not blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist) and
+          (aura.filter == "HARMFUL" or aura.caster == "player" and auras.ownBuffs[aura.spellId])
+      end,
+      borderColor = borderColor,
+    },
+    --]]
+    {
+      name = "SecondaryPlayerAuras2",
       parent = "NKPlayerFrame",
       anchorPoint = "BOTTOMRIGHT",
       relativePoint = "TOPRIGHT",
@@ -553,15 +610,24 @@ _G.table.insert(groups, {
       numRows = 3,
       numCols = 7,
       orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return auras.otherDebuffs[aura.spellId] or
+          not auras.irrelevantAuras[aura.spellId] and not auras.coveredPlayerAuras[aura.spellId] and
+          not blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist) and
+          (aura.filter == "HARMFUL" --[[and (aura.dispelType == CURSE or aura.dispelType == POISON or
+          aura.name == "Stats missing")]] or aura.caster == "player" and auras.ownBuffs[aura.spellId])
+      end,
+      --[[
       blacklist = function(aura)
         return aura.filter == "HELPFUL" and (auras.irrelevantAuras[aura.spellId] or
           auras.coveredPlayerAuras[aura.spellId] or aura.duration >= 300 or aura.shouldConsolidate
           or blacklistByTooltip("player", aura.index, "HELPFUL", auras.playerBuffTooltipBlacklist))
       end,
+      --]]
       borderColor = borderColor,
     },
     {
-      name = "NKALongPlayerBuffs",
+      name = "OtherPlayerBuffs",
       anchorPoint = "TOPLEFT",
       relativePoint = "TOPLEFT",
       xOffset = 2,
@@ -570,12 +636,30 @@ _G.table.insert(groups, {
       xGap = (28 + 2),
       yGap = -(28 + 2),
       numRows = 1,
-      numCols = 14,
+      numCols = 12,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return aura.filter == "HELPFUL" and not auras.irrelevantAuras[aura.spellId] and
+          not auras.coveredPlayerAuras[aura.spellId]
+      end,
+    },
+    {
+      name = "OtherPlayerDebuffs",
+      anchorPoint = "TOPLEFT",
+      relativePoint = "TOPLEFT",
+      xOffset = 2,
+      yOffset = -2,
+      size = 28,
+      xGap = (28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 12,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
         return auras.irrelevantAuras[aura.spellId] or auras.coveredPlayerAuras[aura.spellId]
       end,
-    }
+      borderColor = borderColor,
+    },
   },
 })
 
@@ -610,25 +694,6 @@ _G.table.insert(groups, {
   compare = comparators.drFirst,
   displays = {
     {
-      name = "NKATargetDr",
-      parent = "NKTargetFrame",
-      anchorPoint = "TOPLEFT",
-      relativePoint = "BOTTOMLEFT",
-      xOffset = 0,
-      yOffset = -2,
-      size = 28,
-      xGap = (28 + 2),
-      yGap = -(28 + 2),
-      numRows = 1,
-      numCols = 7,
-      orientation = "HORIZONTAL",
-      whitelist = function(aura)
-        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
-          aura.dispelType == ENRAGE
-      end,
-      borderColor = borderColor,
-    },
-    {
       name = "NKATargetAuras",
       parent = "NKTargetFrame",
       anchorPoint = "TOPRIGHT",
@@ -649,31 +714,27 @@ _G.table.insert(groups, {
       borderColor = borderColor,
     },
     {
-      name = "NKAOtherTargetAuras",
+      name = "NKATargetDr",
       parent = "NKTargetFrame",
-      anchorPoint = "BOTTOMLEFT",
-      relativeTo = "NKTargetFrame",
-      relativePoint = "TOPLEFT",
+      anchorPoint = "TOPLEFT",
+      relativePoint = "BOTTOMLEFT",
       xOffset = 0,
-      yOffset = 2,
+      yOffset = -2,
       size = 28,
       xGap = (28 + 2),
-      yGap = (28 + 2),
-      numRows = 3,
+      yGap = -(28 + 2),
+      numRows = 1,
       numCols = 7,
       orientation = "HORIZONTAL",
-      blacklist = function(aura)
-        return auras.immunities[aura.spellId] or auras.fullCc[aura.spellId] or auras.defensive[aura.spellId] or
-          auras.irrelevantAuras[aura.spellId] or (aura.filter == "HELPFUL" and aura.duration >= 300) or
-          aura.shouldConsolidate or (auras.targetDebuffBlacklist[aura.spellId] and aura.caster == "player")
+      whitelist = function(aura)
+        return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
+          aura.dispelType == ENRAGE or aura.caster == "player" and auras.ownBuffs[aura.spellId]
       end,
       borderColor = borderColor,
     },
     {
-      name = "NKALongTargetBuffs",
-      parent = "NKTargetFrame",
+      name = "NKATargetDebuffs",
       anchorPoint = "TOPRIGHT",
-      relativeTo = "UIParent",
       relativePoint = "TOPRIGHT",
       xOffset = -2,
       yOffset = -2,
@@ -681,10 +742,28 @@ _G.table.insert(groups, {
       xGap = -(28 + 2),
       yGap = -(28 + 2),
       numRows = 1,
-      numCols = 16,
+      numCols = 12,
       orientation = "HORIZONTAL",
       blacklist = function(aura)
-        return auras.irrelevantAuras[aura.spellId] or (aura.duration < 300 and not aura.shouldConsolidate)
+        return aura.filter ~= "HARMFUL" or auras.irrelevantAuras[aura.spellId] or
+          (auras.targetDebuffBlacklist[aura.spellId] and aura.caster == "player")
+      end,
+      borderColor = borderColor,
+    },
+    {
+      name = "NKALongTargetBuffs",
+      anchorPoint = "TOPRIGHT",
+      relativePoint = "TOPRIGHT",
+      xOffset = -2,
+      yOffset = -2,
+      size = 28,
+      xGap = -(28 + 2),
+      yGap = -(28 + 2),
+      numRows = 1,
+      numCols = 12,
+      orientation = "HORIZONTAL",
+      whitelist = function(aura)
+        return aura.filter == "HELPFUL" and not auras.irrelevantAuras[aura.spellId]
       end,
     },
   },
@@ -712,7 +791,7 @@ _G.table.insert(groups, {
       orientation = "HORIZONTAL",
       whitelist = function(aura)
         return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
-          aura.dispelType == ENRAGE
+          aura.dispelType == ENRAGE or aura.caster == "player" and auras.ownBuffs[aura.spellId]
       end,
       borderColor = borderColor,
     },
@@ -788,20 +867,18 @@ for i = 1, 4 do
         orientation = "HORIZONTAL",
         showCooldownSweep = true,
         whitelist = function(aura)
-          return auras.immunities[aura.spellId] or auras.fullCc[aura.spellId] or auras.defensive[aura.spellId] or
-            auras.roots[aura.spellId]
+          return auras.fullCc[aura.spellId] or auras.roots[aura.spellId] --[=[or auras.immunities[aura.spellId] or
+            auras.defensive[aura.spellId]]=]
         end,
         borderColor = borderColor,
       },
       {
         name = "NKAOtherParty" .. i .. "Auras",
         parent = "NKParty" .. i .. "Frame",
-        ----[[
         anchorPoint = "BOTTOMRIGHT",
         relativePoint = "TOPRIGHT",
         xOffset = 0,
         yOffset = 2,
-        --]]
         --[[
         anchorPoint = "TOPRIGHT",
         relativePoint = "BOTTOMRIGHT",
@@ -814,11 +891,19 @@ for i = 1, 4 do
         numRows = 1,
         numCols = 7,
         orientation = "HORIZONTAL",
+        whitelist = function(aura)
+          return auras.otherDebuffs[aura.spellId] or not auras.irrelevantAuras[aura.spellId] and
+            (aura.filter == "HARMFUL" and (aura.dispelType == CURSE or aura.dispelType == POISON or
+            aura.name == "Stats missing") or aura.caster == "player" and auras.ownBuffs[aura.spellId]) or
+            auras.immunities[aura.spellId] or auras.defensive[aura.spellId]
+        end,
+        --[[
         blacklist = function(aura)
           return not auras.otherDebuffs[aura.spellId] and ((aura.filter == "HELPFUL" and (aura.duration >= 300 or
             aura.shouldConsolidate or aura.caster ~= "player")) or (aura.filter == "HARMFUL" and
             aura.dispelType ~= CURSE and aura.dispelType ~= POISON and aura.name ~= "Stats missing"))
         end,
+        ]]
         borderColor = borderColor,
       },
     },
@@ -832,25 +917,6 @@ for i = 1, 3 do -- Define groups for arena opponents.
     includeDr = true,
     compare = comparators.drFirst,
     displays = {
-      {
-        name = "NKArena" .. i .. "Dr",
-        parent = "NKArena" .. i .. "Frame",
-        anchorPoint = "TOPLEFT",
-        relativePoint = "BOTTOMLEFT",
-        xOffset = 0,
-        yOffset = -2,
-        size = 28,
-        xGap = (28 + 2),
-        yGap = -(28 + 2),
-        numRows = 1,
-        numCols = 7,
-        orientation = "HORIZONTAL",
-        whitelist = function(aura)
-          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
-            aura.dispelType == ENRAGE
-        end,
-        borderColor = borderColor,
-      },
       {
         name = "NKArena" .. i .. "Auras",
         parent = "NKArena" .. i .. "Frame",
@@ -871,8 +937,61 @@ for i = 1, 3 do -- Define groups for arena opponents.
         end,
         borderColor = borderColor,
       },
+      {
+        name = "NKArena" .. i .. "Dr",
+        parent = "NKArena" .. i .. "Frame",
+        anchorPoint = "TOPLEFT",
+        relativePoint = "BOTTOMLEFT",
+        xOffset = 0,
+        yOffset = -2,
+        size = 28,
+        xGap = (28 + 2),
+        yGap = -(28 + 2),
+        numRows = 1,
+        numCols = 7,
+        orientation = "HORIZONTAL",
+        whitelist = function(aura)
+          return aura.filter == "DR" or auras.offensive[aura.spellId] or auras.other[aura.spellId] or
+            aura.dispelType == ENRAGE
+        end,
+        borderColor = borderColor,
+      },
     },
   })
+end
+
+onLoad[#onLoad + 1] = function()
+  _G.OtherPlayerBuffs1:SetScript("OnShow", function()
+    _G.OtherPlayerDebuffs:ClearAllPoints()
+    _G.OtherPlayerDebuffs:SetPoint("TOPLEFT", "OtherPlayerBuffs", "BOTTOMLEFT", 0, 0)
+  end)
+  _G.OtherPlayerBuffs1:SetScript("OnHide", function()
+    _G.OtherPlayerDebuffs:ClearAllPoints()
+    _G.OtherPlayerDebuffs:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", 1, -1)
+  end)
+
+  _G.NKALongTargetBuffs1:SetScript("OnShow", function()
+    _G.NKATargetDebuffs:ClearAllPoints()
+    _G.NKATargetDebuffs:SetPoint("TOPRIGHT", "NKALongTargetBuffs", "BOTTOMRIGHT", 0, 0)
+  end)
+  _G.NKALongTargetBuffs1:SetScript("OnHide", function()
+    _G.NKATargetDebuffs:ClearAllPoints()
+    _G.NKATargetDebuffs:SetPoint("TOPRIGHT", "UIParent", "TOPRIGHT", -1, -1)
+  end)
+
+  do
+    local f = _G.CreateFrame("Frame")
+    f:SetScript("OnEvent", function(self, event, ...)
+      if _G.UnitExists("target") then
+        _G.NKALongTargetBuffs:Show()
+        _G.NKATargetDebuffs:Show()
+      else
+        _G.NKALongTargetBuffs:Hide()
+        _G.NKATargetDebuffs:Hide()
+      end
+    end)
+    f:RegisterEvent("PLAYER_TARGET_CHANGED")
+  end
 end
 
 -- vim: tw=120 sts=2 sw=2 et

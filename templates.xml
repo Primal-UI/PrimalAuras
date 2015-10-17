@@ -84,13 +84,13 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\..\FrameXML\UI.xsd">
         <FontString parentKey="Duration" inherits="PrimalMonoCenter" justifyH="CENTER" justifyV="BOTTOM">
           <Anchors>
             <!-- <Anchor point="BOTTOM" relativeKey="$parent.DurationBackground"/> -->
-            <Anchor point="BOTTOM" y="1"/>
+            <Anchor point="BOTTOM" y="1.01"/> <!-- I get inconsistent positions with exactly 1 somehow :/ -->
           </Anchors>
         </FontString>
         <FontString parentKey="Count" inherits="PrimalMonoCenter" justifyH="CENTER" justifyV="TOP">
           <Anchors>
             <!-- <Anchor point="TOP" relativeKey="$parent.CountBackground"/> -->
-            <Anchor point="TOP" y="-1"/>
+            <Anchor point="TOP" y="-1.01"/>
           </Anchors>
         </FontString>
       </Layer>

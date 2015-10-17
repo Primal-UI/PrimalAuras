@@ -115,7 +115,7 @@ do
   f:SetScript("OnUpdate", updateTimers)
 end
 
--- Remove the aura and shift the display's remaining auras.  Used for DR.
+-- Remove the aura and shift the display's remaining auras.  Used for DR.  TODO: is this bugged?
 function expireAura(frame)
   local display = frame:GetParent().display
   local i = _G.string.match(frame:GetName(), "%d+") + 1
@@ -316,6 +316,10 @@ local function initDisplay(display, group)
   elseif display.orientation == "VERTICAL" then
     _G.assert(false)
   end
+end
+
+local function isEmpty(display)
+
 end
 
 local function initGroup(group)
@@ -629,12 +633,18 @@ end
 
 local handlerFrame = _G.CreateFrame("Frame")
 
+onLoad = {}
+
 function addon:ADDON_LOADED(name)
   _G.assert(_G.IsAddOnLoaded("PrimalUnitFrames"))
   handlerFrame:UnregisterEvent("ADDON_LOADED")
 
   for _, group in _G.ipairs(groups) do
     initGroup(group)
+  end
+
+  for _, f in _G.ipairs(onLoad) do
+    f()
   end
 
   --handlerFrame:RegisterEvent("PLAYER_LOGIN")
